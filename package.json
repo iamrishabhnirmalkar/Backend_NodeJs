@@ -5,9 +5,12 @@
   "main": "dist/server.js",
   "type": "commonjs",
   "scripts": {
-    "start": "nodemon src/server.ts",
-    "dev": "nodemon dist/server.js",
-    "build": "tsc"
+    "dist": "npx tsc",
+    "start": "cross-env NODE_ENV=production nodemon dist/server.js",
+    "dev": "cross-env NODE_ENV=development nodemon src/server.ts",
+    "prod": "cross-env NODE_ENV=production nodemon src/server.ts",
+    "test": "cross-env NODE_ENV=test nodemon src/server.ts",
+    "build": "npm run dist"
   },
   "repository": {
     "type": "git",
@@ -32,6 +35,8 @@
   "dependencies": {
     "@prisma/client": "^6.19.0",
     "cors": "^2.8.5",
+    "cross-env": "^10.1.0",
+    "dotenv-flow": "^4.1.0",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "mysql2": "^3.15.3",

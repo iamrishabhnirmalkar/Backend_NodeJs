@@ -1,7 +1,19 @@
+import dotenvFlow from "dotenv-flow";
+dotenvFlow.config();
+
+// Parse comma-separated frontend URLs into an array
+const parseFrontendUrls = (urls: string): string[] => {
+  return urls
+    .split(",")
+    .map((url) => url.trim())
+    .filter((url) => url.length > 0);
+};
+
 export default {
-  //  Server Port
-  PORT: parseInt(process.env.PORT || "8000"),
-  SERVEL_URL: process.env.SERVEL_URL || "http://localhost:8000",
+  // Server Port
+  PORT: parseInt(process.env.PORT as string),
+  SERVER_URL: process.env.SERVER_URL as string,
+  NODE_ENV: process.env.NODE_ENV || "development",
 
   // Database
   DATABASE: {
@@ -14,8 +26,10 @@ export default {
     timezone: "+00:00",
   },
 
-  // Frontend URL
-  FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
+  // Frontend URLs (array of allowed origins)
+  FRONTEND_URLS: parseFrontendUrls(
+    process.env.FRONTEND_URL || "http://localhost:3000"
+  ),
 
   // Redis
   REDIS: {

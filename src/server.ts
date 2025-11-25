@@ -5,7 +5,7 @@ const server = app.listen(config.PORT, () => {
   try {
     console.info(`APPLICATION_STARTED`, {
       port: config.PORT,
-      SERVAL_URL: config.SERVEL_URL,
+      SERVER_URL: config.SERVER_URL,
     });
   } catch (error) {
     console.error(`APPLICATION_ERROR`, {
