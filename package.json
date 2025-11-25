@@ -10,7 +10,12 @@
     "dev": "cross-env NODE_ENV=development nodemon src/server.ts",
     "prod": "cross-env NODE_ENV=production nodemon src/server.ts",
     "test": "cross-env NODE_ENV=test nodemon src/server.ts",
-    "build": "npm run dist"
+    "build": "npm run dist",
+    "prisma:init": "prisma generate",
+    "prisma:studio": "prisma studio",
+    "prisma:migrate": "prisma migrate dev --name init",
+    "prisma:push": "prisma db push",
+    "prisma:reset": "prisma migrate reset"
   },
   "repository": {
     "type": "git",
@@ -29,17 +34,18 @@
     "@types/helmet": "^4.0.0",
     "@types/node": "^24.10.0",
     "nodemon": "^3.1.10",
+    "prisma": "^6.19.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@prisma/adapter-mariadb": "^7.0.0",
     "@prisma/client": "^6.19.0",
     "cors": "^2.8.5",
     "cross-env": "^10.1.0",
+    "dotenv": "^17.2.3",
     "dotenv-flow": "^4.1.0",
     "express": "^5.1.0",
-    "helmet": "^8.1.0",
-    "mysql2": "^3.15.3",
-    "prisma": "^6.19.0"
+    "helmet": "^8.1.0"
   }
 }
