@@ -3,4 +3,6 @@ export default {
   SOMETHING_WENT_WRONG: `error`,
   NOT_FOUND: (entity: string) => `${entity} not found`,
   TOO_MANY_REQUESTS: `Too many requests! Please try again after some time`,
+  METHOD_NOT_ALLOWED: `HTTP method not allowed for this route`,
+  INVALID_HTTP_METHOD: `Invalid HTTP method used`,
 };
