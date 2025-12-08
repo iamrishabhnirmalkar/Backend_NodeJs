@@ -1,25 +1,16 @@
 {
   "compilerOptions": {
+    "target": "es2016",
+    "module": "commonjs",
     "rootDir": "./src",
     "outDir": "./dist",
-    "module": "CommonJS", // ⬅️ Change from "nodenext"
-    "moduleResolution": "node", // ⬅️ Add this
-    "target": "esnext",
-    "types": ["node"], // ⬅️ Add this
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "jsx": "react-jsx",
-    "verbatimModuleSyntax": false, // ⬅️ Change to false
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": false, // ⬅️ Change to false
-    "moduleDetection": "force",
     "skipLibCheck": true,
-    "esModuleInterop": true, // ⬅️ Add this
-    "allowSyntheticDefaultImports": true // ⬅️ Add this
+    "resolveJsonModule": true
   },
-  "include": ["src/**/*"]
+  "include": [
+    "src/**/*"
+  ]
 }

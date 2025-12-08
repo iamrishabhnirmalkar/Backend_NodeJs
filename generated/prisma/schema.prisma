@@ -1,0 +1,21 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+model ApiLog {
+  id        String   @id @default(uuid())
+  method    String
+  url       String
+  status    Int
+  duration  Int // in ms
+  ip        String?
+  timestamp DateTime @default(now())
+  userAgent String?
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}

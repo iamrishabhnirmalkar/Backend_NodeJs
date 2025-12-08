@@ -1,8 +1,10 @@
-import { NextFunction, Request, Response } from "express";
-import responseMessage from "../constants/responseMessage";
-import httpError from "../utils/httpError";
-import httpResponse from "../utils/httpResponse";
-import quicker from "../utils/quicker";
+import { NextFunction, Request, Response } from 'express';
+import responseMessage from '../constants/responseMessage';
+import httpError from '../utils/httpError';
+import httpResponse from '../utils/httpResponse';
+import quicker from '../utils/quicker';
+
+import database from '../config/database/connection';
 
 export default {
   self: (req: Request, res: Response, next: NextFunction) => {
@@ -12,11 +14,16 @@ export default {
       httpError(next, error, req, 500);
     }
   },
-  health: (req: Request, res: Response, next: NextFunction) => {
+  health: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const dbStatus = await database.$queryRaw`SELECT 1`
+        .then(() => 'CONNECTED')
+        .catch(() => 'DISCONNECTED');
+
       const healthData = {
         application: quicker.getApplicationHealth(),
         system: quicker.getSystemHealth(),
+        database: dbStatus,
         timestamp: Date.now(),
       };
 

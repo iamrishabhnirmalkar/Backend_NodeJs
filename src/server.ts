@@ -1,5 +1,5 @@
-import app from "./app";
-import config from "./config/config";
+import app from './app';
+import config from './config/config';
 
 const server = app.listen(config.PORT, () => {
   try {
@@ -16,17 +16,17 @@ const server = app.listen(config.PORT, () => {
 });
 
 // Handle graceful shutdown
-process.on("SIGTERM", () => {
-  console.info("SIGTERM received");
+process.on('SIGTERM', () => {
+  console.info('SIGTERM received');
   server.close(() => {
-    console.info("Process terminated");
+    console.info('Process terminated');
   });
 });
 
-process.on("SIGINT", () => {
-  console.info("SIGINT received");
+process.on('SIGINT', () => {
+  console.info('SIGINT received');
   server.close(() => {
-    console.info("Process terminated");
+    console.info('Process terminated');
   });
 });
 

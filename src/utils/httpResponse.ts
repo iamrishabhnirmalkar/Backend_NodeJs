@@ -1,13 +1,13 @@
-import { THttpResponse } from "../@types/types";
-import { Request, Response } from "express";
-import config from "../config/config";
+import { THttpResponse } from '../@types/types';
+import { Request, Response } from 'express';
+import config from '../config/config';
 
 export default (
   req: Request,
   res: Response,
   responseStatusCode: number,
   responseMessage: string,
-  data: unknown = null
+  data: unknown = null,
 ): void => {
   const response: THttpResponse = {
     success: true,

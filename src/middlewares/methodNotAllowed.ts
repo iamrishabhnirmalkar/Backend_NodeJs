@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
-import httpError from "../utils/httpError";
-import responseMessage from "../constants/responseMessage";
+import { Request, Response, NextFunction } from 'express';
+import httpError from '../utils/httpError';
+import responseMessage from '../constants/responseMessage';
 
 /**
  * Enhanced middleware to handle 405 Method Not Allowed errors globally
@@ -15,11 +15,11 @@ export default (req: Request, res: Response, next: NextFunction): void => {
   }
 
   // Set the Allow header (required by HTTP spec for 405 responses)
-  res.setHeader("Allow", allowedMethods.join(", "));
+  res.setHeader('Allow', allowedMethods.join(', '));
 
   const errorMessage = `${
     responseMessage.METHOD_NOT_ALLOWED
-  }. Allowed methods: ${allowedMethods.join(", ")}`;
+  }. Allowed methods: ${allowedMethods.join(', ')}`;
   const error = new Error(errorMessage);
 
   httpError(next, error, req, 405);
@@ -38,7 +38,7 @@ function extractAllowedMethods(req: Request): string[] {
   // Method 1: Check route methods object (primary method)
   if (req.route.methods) {
     Object.keys(req.route.methods).forEach((method) => {
-      if (req.route.methods[method] && method !== "_all") {
+      if (req.route.methods[method] && method !== '_all') {
         methods.add(method.toUpperCase());
       }
     });
@@ -49,7 +49,7 @@ function extractAllowedMethods(req: Request): string[] {
     req.route.stack.forEach((layer: any) => {
       if (layer.route && layer.route.methods) {
         Object.keys(layer.route.methods).forEach((method) => {
-          if (layer.route.methods[method] && method !== "_all") {
+          if (layer.route.methods[method] && method !== '_all') {
             methods.add(method.toUpperCase());
           }
         });

@@ -1,13 +1,10 @@
-import { Request } from "express";
-import { THttpError } from "../@types/types";
-import responseMessage from "../constants/responseMessage";
+import { Request } from 'express';
+import { THttpError } from '../@types/types';
+import responseMessage from '../constants/responseMessage';
 
-export default (
-  err: Error | unknown,
-  req: Request,
-  errorStatusCode: number = 500
-): THttpError => {
+export default (err: Error | unknown, req: Request, errorStatusCode: number = 500): THttpError => {
   const errorObj: THttpError = {
+    name: 'HttpError',
     success: false,
     statusCode: errorStatusCode,
     request: {
