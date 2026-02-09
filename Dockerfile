@@ -50,6 +50,10 @@ COPY package.json pnpm-lock.yaml ./
 # Skip scripts to avoid husky prepare script (husky is dev dependency, not needed in production)
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
+# Install Prisma CLI globally (needed for migrations in production)
+# Prisma is in devDependencies but we need CLI for migrations
+RUN npm install -g prisma@^6.19.0
+
 # Copy Prisma schema (needed for migrations)
 COPY prisma ./prisma
 

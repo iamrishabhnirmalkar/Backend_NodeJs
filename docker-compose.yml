@@ -122,7 +122,8 @@ services:
     
     # Production/Test command: runs migrations and starts server
     # For development with hot reload, use docker-compose.override.yml
-    command: sh -c "pnpm prisma:init && pnpm prisma migrate deploy && node dist/server.js"
+    # Note: prisma:init is not needed as Prisma client is already generated in Dockerfile
+    command: sh -c "prisma migrate deploy && node dist/server.js"
 
 # ===========================================
 # Volumes
