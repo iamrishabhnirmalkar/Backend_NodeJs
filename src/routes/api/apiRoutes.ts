@@ -1,14 +1,15 @@
 import { Router } from 'express';
-import apiController from '../controllers/apiController';
-import validateHttpMethods from '../middlewares/validateHttpMethods';
-import methodNotAllowed from '../middlewares/methodNotAllowed';
+import { apiController } from '../../controllers';
+import validateHttpMethods from '../../middlewares/validateHttpMethods';
+import methodNotAllowed from '../../middlewares/methodNotAllowed';
 
 const router: Router = Router();
 
-router.get('/self',
-    /* #swagger.tags = ['Self'] */
-    /* #swagger.description = 'Self Check' */
-    /* #swagger.responses[200] = {
+router.get(
+  '/self',
+  /* #swagger.tags = ['Self'] */
+  /* #swagger.description = 'Self Check' */
+  /* #swagger.responses[200] = {
         description: 'Self check passed',
         schema: {
             success: true,
@@ -16,7 +17,7 @@ router.get('/self',
             data: {}
         }
     } */
-    /* #swagger.responses[500] = {
+  /* #swagger.responses[500] = {
         description: 'Internal Server Error',
         schema: {
             name: 'HttpError',
@@ -31,14 +32,15 @@ router.get('/self',
             data: null
         }
     } */
-    apiController.self
+  apiController.self,
 );
 router.all('/self', methodNotAllowed);
 
-router.get('/health',
-    /* #swagger.tags = ['Health'] */
-    /* #swagger.description = 'Health Check' */
-    /* #swagger.responses[200] = {
+router.get(
+  '/health',
+  /* #swagger.tags = ['Health'] */
+  /* #swagger.description = 'Health Check' */
+  /* #swagger.responses[200] = {
         description: 'Health check passed',
         schema: {
             success: true,
@@ -59,7 +61,7 @@ router.get('/health',
             }
         }
     } */
-    /* #swagger.responses[500] = {
+  /* #swagger.responses[500] = {
         description: 'Internal Server Error',
         schema: {
             name: 'HttpError',
@@ -74,7 +76,7 @@ router.get('/health',
             data: null
         }
     } */
-    apiController.health
+  apiController.health,
 );
 router.all('/health', methodNotAllowed);
 
