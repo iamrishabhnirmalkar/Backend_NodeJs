@@ -41,4 +41,12 @@ export default {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS as string, 10) || 15 * 60 * 1000,
     max: parseInt(process.env.RATE_LIMIT_MAX as string, 10) || 100,
   },
+
+  // JWT Configuration
+  JWT: {
+    accessTokenSecret: (process.env.JWT_ACCESS_TOKEN_SECRET as string) || '',
+    refreshTokenSecret: (process.env.JWT_REFRESH_TOKEN_SECRET as string) || '',
+    accessTokenExpiry: process.env.JWT_ACCESS_TOKEN_EXPIRY || '15m',
+    refreshTokenExpiry: process.env.JWT_REFRESH_TOKEN_EXPIRY || '7d',
+  },
 };

@@ -2,14 +2,25 @@
   "swagger": "2.0",
   "info": {
     "title": "Backend Node.js API",
-    "description": "Auto-generated API documentation",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "description": "\n# Backend Node.js API Documentation\n\n## Authentication & Authorization\n\nThis API uses **JWT (JSON Web Tokens)** for authentication and **RBAC (Role-Based Access Control)** for authorization.\n\n### Authentication Flow\n\n1. **Register** - Create a new user account\n2. **Login** - Authenticate and receive access + refresh tokens\n3. **Use Access Token** - Include in Authorization header: `Bearer <access_token>`\n4. **Refresh Token** - Get new access token when current one expires\n5. **Logout** - Invalidate refresh token\n\n### RBAC System\n\n- **Users** can have multiple **Roles**\n- **Roles** can have multiple **Permissions**\n- Permissions follow format: `resource:action` (e.g., `user:create`, `user:read`)\n\n### Security\n\n- All protected endpoints require a valid JWT access token\n- Admin-only endpoints require the `admin` role\n- Token expires after 15 minutes (configurable)\n- Refresh token expires after 7 days\n\n### Getting Started\n\n1. Register a new user via `POST /api/v1/auth/register`\n2. Login via `POST /api/v1/auth/login` to get tokens\n3. Use the `accessToken` in the Authorization header for protected endpoints\n4. Use `POST /api/v1/auth/refresh` to get a new access token when needed\n    ",
+    "contact": {
+      "name": "API Support"
+    }
   },
   "host": "localhost:8000",
   "basePath": "/",
-  "schemes": [
-    "http"
-  ],
+  "schemes": ["http", "https"],
+  "securityDefinitions": {
+    "bearerAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\""
+    }
+  },
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
   "paths": {
     "/favicon.ico": {
       "get": {
@@ -23,19 +34,239 @@
     },
     "/": {
       "get": {
-        "description": "",
+        "tags": ["RBAC - Permissions"],
+        "summary": "List All Permissions",
+        "description": "Get all permissions. Can filter by resource or action query parameters. Requires admin role.",
+        "parameters": [
+          {
+            "name": "resource",
+            "in": "query",
+            "type": "string",
+            "description": "Filter by resource (e.g., user, product)",
+            "required": false
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "type": "string",
+            "description": "Filter by action (e.g., create, read, update, delete)",
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Permissions retrieved successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Operation successful"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "example": "uuid"
+                          },
+                          "name": {
+                            "type": "string",
+                            "example": "admin"
+                          },
+                          "description": {
+                            "type": "string",
+                            "example": "Administrator role"
+                          },
+                          "isActive": {
+                            "type": "boolean",
+                            "example": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "example": "2024-01-01T00:00:00.000Z"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "example": "2024-01-01T00:00:00.000Z"
+                          },
+                          "_count": {
+                            "type": "object",
+                            "properties": {
+                              "userRoles": {
+                                "type": "number",
+                                "example": 5
+                              },
+                              "rolePermissions": {
+                                "type": "number",
+                                "example": 10
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "permissions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "example": "uuid"
+                          },
+                          "name": {
+                            "type": "string",
+                            "example": "user:create"
+                          },
+                          "resource": {
+                            "type": "string",
+                            "example": "user"
+                          },
+                          "action": {
+                            "type": "string",
+                            "example": "create"
+                          },
+                          "description": {
+                            "type": "string",
+                            "example": "Permission to create users"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "example": "2024-01-01T00:00:00.000Z"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "example": "2024-01-01T00:00:00.000Z"
+                          },
+                          "_count": {
+                            "type": "object",
+                            "properties": {
+                              "rolePermissions": {
+                                "type": "number",
+                                "example": 3
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin role required",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["RBAC - Permissions"],
+        "summary": "Create Permission",
+        "description": "Create a new permission. Permission name format: resource:action (e.g., \"user:create\"). Requires admin role.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "product:update"
+                },
+                "resource": {
+                  "type": "string",
+                  "example": "product"
+                },
+                "action": {
+                  "type": "string",
+                  "example": "update"
+                },
+                "description": {
+                  "type": "string",
+                  "example": "Permission to update products"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Permission created successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Permission created successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "$ref": "#/definitions/Role"
+                    },
+                    "permission": {
+                      "$ref": "#/definitions/Permission"
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "409": {
+            "description": "Permission name already exists",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/self": {
       "get": {
-        "tags": [
-          "Self"
-        ],
+        "tags": ["Self"],
         "description": "Self Check",
         "responses": {
           "200": {
@@ -111,9 +342,7 @@
     },
     "/health": {
       "get": {
-        "tags": [
-          "Health"
-        ],
+        "tags": ["Health"],
         "description": "Health Check",
         "responses": {
           "200": {
@@ -228,6 +457,1261 @@
             }
           }
         }
+      }
+    },
+    "/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User Registration",
+        "description": "Register a new user account. Password must be at least 8 characters with uppercase, lowercase, number, and special character.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RegisterRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "User registered successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/definitions/User"
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "Email or username already exists",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User Login",
+        "description": "Login with email and password. Returns access token (15min expiry) and refresh token (7 days expiry).",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LoginRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Login successful"
+                },
+                "data": {
+                  "$ref": "#/definitions/LoginResponse"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials or inactive account",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/refresh": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Refresh Access Token",
+        "description": "Refresh access token using refresh token. Returns new access token.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RefreshTokenRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Token refreshed successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string",
+                      "example": "new_jwt_access_token"
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired refresh token",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/logout": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User Logout",
+        "description": "Logout user by invalidating refresh token. Optional - can be called without token.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "refreshToken": {
+                  "type": "string",
+                  "example": "jwt_refresh_token_string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Logout successful"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {}
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Get Current User Profile",
+        "description": "Get current authenticated user profile with roles and permissions. Requires valid JWT token.",
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Operation successful"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "example": "uuid"
+                        },
+                        "email": {
+                          "type": "string",
+                          "example": "user@example.com"
+                        },
+                        "username": {
+                          "type": "string",
+                          "example": "username"
+                        },
+                        "firstName": {
+                          "type": "string",
+                          "example": "John"
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "example": "Doe"
+                        },
+                        "isActive": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "roles": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "example": "uuid"
+                              },
+                              "name": {
+                                "type": "string",
+                                "example": "admin"
+                              },
+                              "description": {
+                                "type": "string",
+                                "example": "Administrator role"
+                              }
+                            }
+                          }
+                        },
+                        "permissions": {
+                          "type": "array",
+                          "example": ["user:create", "user:read", "user:update", "user:delete"],
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "example": "2024-01-01T00:00:00.000Z"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "example": "2024-01-01T00:00:00.000Z"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/{id}": {
+      "get": {
+        "tags": ["RBAC - Permissions"],
+        "summary": "Get Permission by ID",
+        "description": "Get permission by ID with associated roles. Requires admin role.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Permission UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Permission retrieved successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Operation successful"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "example": "uuid"
+                        },
+                        "name": {
+                          "type": "string",
+                          "example": "admin"
+                        },
+                        "description": {
+                          "type": "string",
+                          "example": "Administrator role"
+                        },
+                        "isActive": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "rolePermissions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "permission": {
+                                "$ref": "#/definitions/Permission"
+                              }
+                            }
+                          }
+                        },
+                        "userRoles": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "user": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "example": "uuid"
+                                  },
+                                  "email": {
+                                    "type": "string",
+                                    "example": "user@example.com"
+                                  },
+                                  "username": {
+                                    "type": "string",
+                                    "example": "username"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "_count": {
+                          "type": "object",
+                          "properties": {
+                            "userRoles": {
+                              "type": "number",
+                              "example": 5
+                            },
+                            "rolePermissions": {
+                              "type": "number",
+                              "example": 10
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "permission": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "example": "uuid"
+                        },
+                        "name": {
+                          "type": "string",
+                          "example": "user:create"
+                        },
+                        "resource": {
+                          "type": "string",
+                          "example": "user"
+                        },
+                        "action": {
+                          "type": "string",
+                          "example": "create"
+                        },
+                        "description": {
+                          "type": "string",
+                          "example": "Permission to create users"
+                        },
+                        "rolePermissions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "example": "uuid"
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "example": "admin"
+                                  },
+                                  "description": {
+                                    "type": "string",
+                                    "example": "Administrator role"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "_count": {
+                          "type": "object",
+                          "properties": {
+                            "rolePermissions": {
+                              "type": "number",
+                              "example": 3
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "404": {
+            "description": "Permission not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": ["RBAC - Permissions"],
+        "summary": "Update Permission",
+        "description": "Update permission details. Requires admin role.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Permission UUID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "updated:permission"
+                },
+                "resource": {
+                  "type": "string",
+                  "example": "updated"
+                },
+                "action": {
+                  "type": "string",
+                  "example": "permission"
+                },
+                "description": {
+                  "type": "string",
+                  "example": "Updated description"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Permission updated successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Permission updated successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "$ref": "#/definitions/Role"
+                    },
+                    "permission": {
+                      "$ref": "#/definitions/Permission"
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["RBAC - Permissions"],
+        "summary": "Delete Permission",
+        "description": "Delete a permission. This will remove the permission from all roles. Requires admin role.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Permission UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Permission deleted successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Permission deleted successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {}
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/{id}/permissions": {
+      "post": {
+        "tags": ["RBAC - Roles"],
+        "summary": "Assign Permissions to Role",
+        "description": "Assign permissions to a role. This replaces all existing permissions. Requires admin role.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Role UUID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "permissionIds": {
+                  "type": "array",
+                  "example": ["permission-uuid-1", "permission-uuid-2", "permission-uuid-3"],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Permissions assigned successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Permissions assigned successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "example": "uuid"
+                        },
+                        "name": {
+                          "type": "string",
+                          "example": "admin"
+                        },
+                        "rolePermissions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "permission": {
+                                "$ref": "#/definitions/Permission"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/{userId}/roles": {
+      "get": {
+        "tags": ["RBAC - User Roles"],
+        "summary": "Get User Roles",
+        "description": "Get all roles assigned to a user with their permissions. Requires admin role.",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "User UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User roles retrieved successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Operation successful"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "example": "uuid"
+                        },
+                        "email": {
+                          "type": "string",
+                          "example": "user@example.com"
+                        },
+                        "username": {
+                          "type": "string",
+                          "example": "username"
+                        }
+                      }
+                    },
+                    "roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "example": "uuid"
+                          },
+                          "name": {
+                            "type": "string",
+                            "example": "admin"
+                          },
+                          "description": {
+                            "type": "string",
+                            "example": "Administrator role"
+                          },
+                          "permissions": {
+                            "type": "array",
+                            "example": ["user:create", "user:read", "user:update", "user:delete"],
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "assignedAt": {
+                            "type": "string",
+                            "example": "2024-01-01T00:00:00.000Z"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["RBAC - User Roles"],
+        "summary": "Assign Role to User",
+        "description": "Assign a role to a user. Requires admin role.",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "User UUID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "roleId": {
+                  "type": "string",
+                  "example": "role-uuid"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Role assigned to user successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Role assigned to user successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "userRole": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "example": "uuid"
+                        },
+                        "userId": {
+                          "type": "string",
+                          "example": "user-uuid"
+                        },
+                        "roleId": {
+                          "type": "string",
+                          "example": "role-uuid"
+                        },
+                        "role": {
+                          "$ref": "#/definitions/Role"
+                        },
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "example": "uuid"
+                            },
+                            "email": {
+                              "type": "string",
+                              "example": "user@example.com"
+                            },
+                            "username": {
+                              "type": "string",
+                              "example": "username"
+                            }
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "example": "2024-01-01T00:00:00.000Z"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "409": {
+            "description": "Role already assigned to user",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": ["RBAC - User Roles"],
+        "summary": "Update User Roles (Replace All)",
+        "description": "Update user roles by replacing all existing roles with new ones. Requires admin role.",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "User UUID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "roleIds": {
+                  "type": "array",
+                  "example": ["role-uuid-1", "role-uuid-2"],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User roles updated successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "User roles updated successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "roles": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/Role"
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/{userId}/roles/{roleId}": {
+      "delete": {
+        "tags": ["RBAC - User Roles"],
+        "summary": "Remove Role from User",
+        "description": "Remove a role from a user. Requires admin role.",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "User UUID"
+          },
+          {
+            "name": "roleId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Role UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Role removed from user successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Role removed from user successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {}
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "404": {
+            "description": "User role assignment not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "uuid"
+        },
+        "email": {
+          "type": "string",
+          "example": "user@example.com"
+        },
+        "username": {
+          "type": "string",
+          "example": "username"
+        },
+        "firstName": {
+          "type": "string",
+          "example": "John"
+        },
+        "lastName": {
+          "type": "string",
+          "example": "Doe"
+        },
+        "isActive": {
+          "type": "boolean",
+          "example": true
+        },
+        "createdAt": {
+          "type": "string",
+          "example": "2024-01-01T00:00:00.000Z"
+        },
+        "updatedAt": {
+          "type": "string",
+          "example": "2024-01-01T00:00:00.000Z"
+        }
+      }
+    },
+    "Role": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "uuid"
+        },
+        "name": {
+          "type": "string",
+          "example": "admin"
+        },
+        "description": {
+          "type": "string",
+          "example": "Administrator role with full access"
+        },
+        "isActive": {
+          "type": "boolean",
+          "example": true
+        },
+        "createdAt": {
+          "type": "string",
+          "example": "2024-01-01T00:00:00.000Z"
+        },
+        "updatedAt": {
+          "type": "string",
+          "example": "2024-01-01T00:00:00.000Z"
+        }
+      }
+    },
+    "Permission": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "uuid"
+        },
+        "name": {
+          "type": "string",
+          "example": "user:create"
+        },
+        "resource": {
+          "type": "string",
+          "example": "user"
+        },
+        "action": {
+          "type": "string",
+          "example": "create"
+        },
+        "description": {
+          "type": "string",
+          "example": "Permission to create users"
+        },
+        "createdAt": {
+          "type": "string",
+          "example": "2024-01-01T00:00:00.000Z"
+        },
+        "updatedAt": {
+          "type": "string",
+          "example": "2024-01-01T00:00:00.000Z"
+        }
+      }
+    },
+    "LoginRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "example": "user@example.com"
+        },
+        "password": {
+          "type": "string",
+          "example": "SecurePass123!"
+        }
+      }
+    },
+    "RegisterRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "example": "user@example.com"
+        },
+        "username": {
+          "type": "string",
+          "example": "username"
+        },
+        "password": {
+          "type": "string",
+          "example": "SecurePass123!"
+        },
+        "firstName": {
+          "type": "string",
+          "example": "John"
+        },
+        "lastName": {
+          "type": "string",
+          "example": "Doe"
+        }
+      }
+    },
+    "RefreshTokenRequest": {
+      "type": "object",
+      "properties": {
+        "refreshToken": {
+          "type": "string",
+          "example": "jwt_refresh_token_string"
+        }
+      }
+    },
+    "LoginResponse": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "example": "uuid"
+            },
+            "email": {
+              "type": "string",
+              "example": "user@example.com"
+            },
+            "username": {
+              "type": "string",
+              "example": "username"
+            },
+            "firstName": {
+              "type": "string",
+              "example": "John"
+            },
+            "lastName": {
+              "type": "string",
+              "example": "Doe"
+            },
+            "roles": {
+              "type": "array",
+              "example": ["admin"],
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "tokens": {
+          "type": "object",
+          "properties": {
+            "accessToken": {
+              "type": "string",
+              "example": "jwt_access_token"
+            },
+            "refreshToken": {
+              "type": "string",
+              "example": "jwt_refresh_token"
+            }
+          }
+        }
+      }
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "example": false
+        },
+        "statusCode": {
+          "type": "number",
+          "example": 400
+        },
+        "message": {
+          "type": "string",
+          "example": "Error message"
+        },
+        "data": {}
       }
     }
   }

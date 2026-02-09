@@ -5,4 +5,8 @@ export default {
   TOO_MANY_REQUESTS: `Too many requests! Please try again after some time`,
   METHOD_NOT_ALLOWED: `HTTP method not allowed for this route`,
   INVALID_HTTP_METHOD: `Invalid HTTP method used`,
+  UNAUTHORIZED: (message: string = 'Unauthorized access') => message,
+  FORBIDDEN: (message: string = 'Access forbidden') => message,
+  BAD_REQUEST: (message: string = 'Bad request') => message,
+  CONFLICT: (message: string = 'Resource conflict') => message,
 };

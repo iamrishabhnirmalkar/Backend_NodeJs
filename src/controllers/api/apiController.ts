@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
-import responseMessage from '../constants/responseMessage';
-import httpError from '../utils/httpError';
-import httpResponse from '../utils/httpResponse';
-import quicker from '../utils/quicker';
+import responseMessage from '../../constants/responseMessage';
+import httpError from '../../utils/httpError';
+import httpResponse from '../../utils/httpResponse';
+import quicker from '../../utils/quicker';
 
-import database from '../config/database/connection';
+import database from '../../config/database/connection';
 
 export default {
   self: (req: Request, res: Response, next: NextFunction) => {
