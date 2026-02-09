@@ -1,12 +1,12 @@
 import app from './app';
 import config from './config/config';
+import colors from './utils/terminalColors';
 
 const server = app.listen(config.PORT, () => {
   try {
-    console.info(`APPLICATION_STARTED`, {
-      port: config.PORT,
-      SERVER_URL: config.SERVER_URL,
-    });
+    console.log(
+      `${colors.bold}${colors.brightGreen}✓${colors.reset} Server running at ${colors.brightCyan}${config.SERVER_URL}${colors.reset} (port ${colors.bold}${config.PORT}${colors.reset})`,
+    );
   } catch (error) {
     console.error(`APPLICATION_ERROR`, {
       meta: error,

@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+echo "🔨 Building project..."
+echo ""
+
+# Run build command
+pnpm run build
+
+# Check if build succeeded
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Build failed! Please fix the errors above before pushing."
+  echo ""
+  echo "Common issues:"
+  echo "  - TypeScript compilation errors"
+  echo "  - Missing dependencies (run: pnpm install)"
+  echo "  - Syntax errors in source files"
+  echo ""
+  exit 1
+fi
+
+echo ""
+echo "✅ Build successful! Proceeding with push..."

@@ -23,8 +23,8 @@ pnpm install
 
 The app uses **dotenv-flow** and loads env by `NODE_ENV`:
 
-| NODE_ENV     | File loaded      |
-|-------------|------------------|
+| NODE_ENV    | File loaded        |
+| ----------- | ------------------ |
 | development | `.env.development` |
 | production  | `.env.production`  |
 | test        | `.env.test`        |
@@ -139,21 +139,92 @@ Ensure `DATABASE_URL` in your `.env.development` (or `.env.production` / `.env.t
 
 ## Scripts
 
-| Script          | Description                    |
-|----------------|--------------------------------|
-| `pnpm dev`     | Start dev server (nodemon)     |
-| `pnpm start`   | Start production server        |
-| `pnpm build`   | Compile TypeScript to `dist/`  |
-| `pnpm test`    | Start server in test env       |
-| `pnpm prisma:init`   | Generate Prisma client   |
-| `pnpm prisma:migrate`| Run migrations (dev)     |
-| `pnpm prisma:push`   | Push schema (no migrations) |
-| `pnpm prisma:reset`  | Reset DB (dev)           |
-| `pnpm prisma:studio` | Open Prisma Studio      |
+| Script                | Description                   |
+| --------------------- | ----------------------------- |
+| `pnpm dev`            | Start dev server (nodemon)    |
+| `pnpm start`          | Start production server       |
+| `pnpm build`          | Compile TypeScript to `dist/` |
+| `pnpm test`           | Start server in test env      |
+| `pnpm prisma:init`    | Generate Prisma client        |
+| `pnpm prisma:migrate` | Run migrations (dev)          |
+| `pnpm prisma:push`    | Push schema (no migrations)   |
+| `pnpm prisma:reset`   | Reset DB (dev)                |
+| `pnpm prisma:studio`  | Open Prisma Studio            |
 
 ## API docs
 
 - Swagger UI: `http://localhost:8000/api-docs`
+
+## Git Hooks & Commit Conventions
+
+This project uses **Husky** to enforce code quality and commit standards.
+
+### Pre-commit Hook
+
+Before each commit:
+
+- **Prettier** automatically formats staged files (`.ts`, `.js`, `.json`, `.md`)
+- Code is formatted according to `.prettierrc` rules
+
+### Commit Message Format
+
+Commits must follow the **Conventional Commits** format:
+
+```
+<type>(<scope>): <subject>
+```
+
+**Types:**
+
+- `feat` - New feature
+- `fix` - Bug fix
+- `docs` - Documentation changes
+- `style` - Code style (formatting, semicolons, etc.)
+- `refactor` - Code refactoring
+- `perf` - Performance improvements
+- `test` - Adding or updating tests
+- `build` - Build system or dependencies
+- `ci` - CI/CD changes
+- `chore` - Other changes (no src/test changes)
+- `revert` - Revert a previous commit
+
+**Examples:**
+
+```bash
+feat: add user authentication endpoint
+fix(api): resolve database connection timeout
+docs: update README with XAMPP setup instructions
+style: format code with prettier
+refactor(controllers): simplify error handling
+```
+
+**Invalid examples:**
+
+```bash
+# ❌ Missing type
+add new feature
+
+# ❌ Wrong format
+Added user login
+
+# ❌ Type should be lowercase
+FEAT: add authentication
+```
+
+### Pre-push Hook
+
+Before pushing to remote:
+
+- **Build** runs (`pnpm run build`)
+- If build fails, push is blocked with error details
+- Fix TypeScript errors before pushing
+
+**To skip hooks (not recommended):**
+
+```bash
+git commit --no-verify  # Skip pre-commit
+git push --no-verify    # Skip pre-push
+```
 
 ## License
 

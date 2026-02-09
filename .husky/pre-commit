@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+echo "🔍 Running lint-staged (Prettier formatting)..."
+npx lint-staged
+
+echo "✅ Pre-commit checks passed!"
