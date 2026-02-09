@@ -44,8 +44,8 @@ export default {
 
   // JWT Configuration
   JWT: {
-    accessTokenSecret: process.env.JWT_ACCESS_TOKEN_SECRET as string,
-    refreshTokenSecret: process.env.JWT_REFRESH_TOKEN_SECRET as string,
+    accessTokenSecret: (process.env.JWT_ACCESS_TOKEN_SECRET as string) || '',
+    refreshTokenSecret: (process.env.JWT_REFRESH_TOKEN_SECRET as string) || '',
     accessTokenExpiry: process.env.JWT_ACCESS_TOKEN_EXPIRY || '15m',
     refreshTokenExpiry: process.env.JWT_REFRESH_TOKEN_EXPIRY || '7d',
   },
