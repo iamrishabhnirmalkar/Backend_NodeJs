@@ -1,0 +1,35 @@
+# ===========================================
+# Development Override Configuration
+# Copy this file to docker-compose.override.yml for development hot reload
+# ===========================================
+# 
+# Usage:
+#   cp docker-compose.override.example.yml docker-compose.override.yml
+#   docker-compose up -d
+#
+# This enables:
+#   - Hot reload (nodemon watches for file changes)
+#   - Source code mounted as volume
+#   - Development dependencies included
+#   - Development migrations (prisma migrate dev)
+# ===========================================
+
+services:
+  app:
+    # Use development Dockerfile
+    build:
+      dockerfile: Dockerfile.dev
+    
+    # Mount source code for hot reload
+    volumes:
+      - .:/app
+      - /app/node_modules          # Prevent overwriting node_modules
+      - /app/generated             # Prevent overwriting generated Prisma client
+      - ./logs:/app/logs
+    
+    # Development command with hot reload
+    command: sh -c "pnpm prisma:init && pnpm prisma:migrate && pnpm dev"
+    
+    # Force development environment
+    environment:
+      NODE_ENV: development
