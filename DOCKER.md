@@ -2,6 +2,16 @@
 
 Complete Docker setup for Backend Node.js - Works on **Windows, Linux, macOS, and Ubuntu**.
 
+## Production vs Developer
+
+| Mode           | How to run                                                                                                                                                   | Use case                                          |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| **Production** | `cp .env.docker.example .env` → edit `NODE_ENV=production`, `MYSQL_DATABASE=backend_nodejs_prod` → **do not** copy override → `docker-compose up -d --build` | Deployed app, compiled build, migrations on start |
+| **Developer**  | `cp .env.docker.example .env` → edit `NODE_ENV=development` → `cp docker-compose.override.example.yml docker-compose.override.yml` → `docker-compose up -d`  | Hot reload, Prisma Studio, dev DB                 |
+
+- **Production**: No override file. Uses `Dockerfile` (multi-stage), runs `prisma migrate deploy && node dist/server.js`.
+- **Developer**: With override file. Uses `Dockerfile.dev`, runs `pnpm prisma:init && pnpm prisma:migrate && pnpm dev` (nodemon).
+
 ## Quick Start
 
 ```bash
@@ -9,8 +19,8 @@ Complete Docker setup for Backend Node.js - Works on **Windows, Linux, macOS, an
 git clone <repository-url>
 cd Backend_NodeJs
 
-# 2. Copy Docker environment file
-cp .env.docker .env
+# 2. Copy Docker environment file (never commit .env; edit for production vs dev)
+cp .env.docker.example .env
 
 # 3. Edit .env and set NODE_ENV (development, test, or production)
 # NODE_ENV=development  # or test, or production
@@ -103,9 +113,15 @@ docker-compose up -d
 
 ## Services
 
-- **app** - Node.js backend API (port 8000)
-- **mysql** - MySQL 8.0 database (port 3306)
+- **app** - Node.js backend API (port 8000); runs Prisma migrations on start
+- **mysql** - MySQL 8.0 database (port 3306); DB and user created from env
 - **redis** - Redis cache (port 6379)
+
+## Database setup (Docker)
+
+- **MySQL**: Created by docker-compose from `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`. No manual DB setup needed.
+- **Prisma**: Migrations run automatically when the app starts (`prisma migrate deploy` in production, `prisma migrate dev` in developer override).
+- **pnpm**: Used in both Dockerfile and Dockerfile.dev; run `pnpm install` locally and use `pnpm prisma:init` / `pnpm prisma:migrate` as needed.
 
 ## Environment Configuration
 

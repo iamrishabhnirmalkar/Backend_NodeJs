@@ -27,12 +27,12 @@ try {
 
 # Check if .env file exists
 if (-not (Test-Path .env)) {
-    Write-Host "⚠️  .env file not found. Copying from .env.docker..." -ForegroundColor Yellow
-    if (Test-Path .env.docker) {
-        Copy-Item .env.docker .env
-        Write-Host "✅ Created .env from .env.docker" -ForegroundColor Green
+    Write-Host "⚠️  .env file not found. Copying from .env.docker.example..." -ForegroundColor Yellow
+    if (Test-Path .env.docker.example) {
+        Copy-Item .env.docker.example .env
+        Write-Host "✅ Created .env from .env.docker.example (edit .env for your environment)" -ForegroundColor Green
     } else {
-        Write-Host "❌ .env.docker not found. Please create .env file." -ForegroundColor Red
+        Write-Host "❌ .env.docker.example not found. Please copy it to .env and configure." -ForegroundColor Red
         exit 1
     }
 } else {

@@ -21,12 +21,12 @@ echo "✅ docker-compose is available"
 
 # Check if .env file exists
 if [ ! -f .env ]; then
-    echo "⚠️  .env file not found. Copying from .env.docker..."
-    if [ -f .env.docker ]; then
-        cp .env.docker .env
-        echo "✅ Created .env from .env.docker"
+    echo "⚠️  .env file not found. Copying from .env.docker.example..."
+    if [ -f .env.docker.example ]; then
+        cp .env.docker.example .env
+        echo "✅ Created .env from .env.docker.example (edit .env for your environment)"
     else
-        echo "❌ .env.docker not found. Please create .env file."
+        echo "❌ .env.docker.example not found. Please copy it to .env and configure."
         exit 1
     fi
 fi

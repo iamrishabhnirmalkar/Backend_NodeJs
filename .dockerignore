@@ -12,11 +12,10 @@ generated
 logs
 *.log
 
-# Environment files (except examples)
+# Environment files (never copy into image; use docker-compose env)
 .env
 .env.*
 !.env.example
-!.env.docker
 !.env.docker.example
 
 # Version control

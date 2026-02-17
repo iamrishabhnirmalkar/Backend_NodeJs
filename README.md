@@ -29,8 +29,8 @@ Express + TypeScript + Prisma (MySQL) API backend with health check, rate limiti
 git clone <repository-url>
 cd Backend_NodeJs
 
-# Copy Docker environment file
-cp .env.docker .env
+# Copy Docker environment file (never commit .env)
+cp .env.docker.example .env
 
 # Edit .env and set NODE_ENV (development, test, or production)
 # NODE_ENV=development
@@ -136,7 +136,7 @@ docker-compose exec app pnpm prisma:migrate
 
 #### Docker Environment Variables
 
-Create `.env` file (copy from `.env.docker`):
+Create `.env` file (copy from `.env.docker.example`; never commit `.env`):
 
 ```env
 # Environment (change this: development, test, or production)
@@ -176,11 +176,9 @@ All services include health checks:
 #### Production Deployment
 
 ```bash
-# Build and start production containers
+# In .env: NODE_ENV=production, MYSQL_DATABASE=backend_nodejs_prod
+# Remove docker-compose.override.yml if present (no hot reload in prod)
 docker-compose up -d --build
-
-# Or use production-specific compose file
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
 ---

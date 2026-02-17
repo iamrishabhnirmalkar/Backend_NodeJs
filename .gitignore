@@ -74,16 +74,16 @@ coverage/
 # ===========================================
 # Environment Variables
 # ===========================================
-# Ignore all .env files except examples
+# Ignore all .env files in root (never commit secrets)
 .env
+.env.docker
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Keep example files
+# Keep example files only (safe to commit)
 !.env.example
-!.env.docker
 !.env.docker.example
 !.env.development
 !.env.test

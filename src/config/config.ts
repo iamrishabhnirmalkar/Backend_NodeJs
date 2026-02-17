@@ -10,9 +10,9 @@ const parseFrontendUrls = (urls: string): string[] => {
 };
 
 export default {
-  // Server Port
-  PORT: parseInt(process.env.PORT as string),
-  SERVER_URL: process.env.SERVER_URL as string,
+  // Server Port (default 8000 for Docker/local)
+  PORT: parseInt(process.env.PORT as string, 10) || 8000,
+  SERVER_URL: (process.env.SERVER_URL as string) || 'http://localhost:8000',
   NODE_ENV: process.env.NODE_ENV,
 
   // Database

@@ -4,6 +4,7 @@
   "description": "",
   "main": "dist/server.js",
   "type": "commonjs",
+  "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dist": "npx tsc",
     "start": "cross-env NODE_ENV=production nodemon dist/server.js",
@@ -15,7 +16,7 @@
     "clean:all": "rimraf dist ../../logs node_modules",
     "format": "prettier --write .",
     "swagger": "ts-node src/config/swagger.ts",
-    "build": "npm run clean:dist && npx tsc",
+    "build": "pnpm run clean:dist && pnpm exec tsc",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f app",

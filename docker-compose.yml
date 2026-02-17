@@ -20,7 +20,7 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-app_password}
     
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "${MYSQL_PORT:-3307}:3306"
     
     volumes:
       - mysql_data:/var/lib/mysql
@@ -46,7 +46,7 @@ services:
     restart: unless-stopped
     
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "${REDIS_PORT:-6380}:6379"
     
     volumes:
       - redis_data:/data
@@ -75,10 +75,11 @@ services:
     restart: unless-stopped
     
     ports:
-      - "${PORT:-8000}:8000"
+      - "${PORT:-8001}:8000"
     
     environment:
-      # Server Configuration
+      # Server Configuration (HOST=0.0.0.0 so server is reachable from host)
+      HOST: "0.0.0.0"
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-8000}
       SERVER_URL: ${SERVER_URL:-http://localhost:8000}
