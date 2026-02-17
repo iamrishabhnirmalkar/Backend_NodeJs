@@ -1,0 +1,32 @@
+# ===========================================
+# Override: Use MariaDB instead of MySQL
+# Run: docker-compose -f docker-compose.yml -f docker-compose.mariadb.yml up -d
+# ===========================================
+# Same Prisma provider (mysql) and DATABASE_URL format. Only the DB image changes.
+
+services:
+  mysql:
+    image: mariadb:11
+    container_name: backend_mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-${MYSQL_ROOT_PASSWORD:-rootpassword}}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-${MYSQL_DATABASE:-backend_nodejs_dev}}
+      MARIADB_USER: ${MARIADB_USER:-${MYSQL_USER:-app_user}}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-${MYSQL_PASSWORD:-app_password}}
+    # Keep same port and volume so app still uses host "mysql"
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  app:
+    environment:
+      # App still connects to service name "mysql" (same host)
+      DATABASE_URL: mysql://${MARIADB_USER:-${MYSQL_USER:-app_user}}:${MARIADB_PASSWORD:-${MYSQL_PASSWORD:-app_password}}@mysql:3306/${MARIADB_DATABASE:-${MYSQL_DATABASE:-backend_nodejs_dev}}

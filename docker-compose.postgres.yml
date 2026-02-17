@@ -1,0 +1,47 @@
+# ===========================================
+# Override: Use PostgreSQL instead of MySQL
+# Run: docker-compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+# ===========================================
+# 1. Change prisma/schema.prisma datasource to provider = "postgresql"
+# 2. Create new migration: prisma migrate dev --name init_postgres
+# 3. Use this override so only PostgreSQL starts (MySQL is disabled via profile).
+
+services:
+  # Disable MySQL when using this override (profile so it doesn't start by default)
+  mysql:
+    profiles:
+      - mysql
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: backend_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app_password}
+      POSTGRES_DB: ${POSTGRES_DB:-backend_nodejs_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -q"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  app:
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-app_user}:${POSTGRES_PASSWORD:-app_password}@postgres:5432/${POSTGRES_DB:-backend_nodejs_dev}?schema=public
+
+volumes:
+  postgres_data:
+    driver: local
