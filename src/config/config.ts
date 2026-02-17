@@ -15,13 +15,13 @@ export default {
   SERVER_URL: (process.env.SERVER_URL as string) || 'http://localhost:8000',
   NODE_ENV: process.env.NODE_ENV,
 
-  // Database
+  // Database (supports MySQL/MariaDB via MYSQL_* or PostgreSQL via POSTGRES_*)
   DATABASE: {
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DATABASE,
-    port: 3306,
+    host: process.env.MYSQL_HOST ?? process.env.POSTGRES_HOST,
+    user: process.env.MYSQL_USER ?? process.env.POSTGRES_USER,
+    password: process.env.MYSQL_PASSWORD ?? process.env.POSTGRES_PASSWORD,
+    database: process.env.MYSQL_DATABASE ?? process.env.POSTGRES_DB,
+    port: process.env.POSTGRES_HOST ? 5432 : 3306,
     charset: 'utf8mb4',
     timezone: '+00:00',
   },

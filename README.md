@@ -181,6 +181,15 @@ All services include health checks:
 docker-compose up -d --build
 ```
 
+#### Database options (MariaDB / PostgreSQL)
+
+You can run the same app with **MariaDB** or **PostgreSQL** instead of MySQL:
+
+- **MariaDB**: `docker-compose -f docker-compose.yml -f docker-compose.mariadb.yml up -d` (no Prisma change)
+- **PostgreSQL**: Change `prisma/schema.prisma` to `provider = "postgresql"`, then `docker-compose -f docker-compose.yml -f docker-compose.postgres.yml up -d`
+
+See **[docs/DATABASE-SWITCH.md](docs/DATABASE-SWITCH.md)** for full steps and env examples.
+
 ---
 
 ### 📦 Local Setup (Without Docker)

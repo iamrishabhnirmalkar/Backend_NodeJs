@@ -1,0 +1,18 @@
+// ===========================================
+// PostgreSQL datasource (replace in prisma/schema.prisma)
+// ===========================================
+// 1. In prisma/schema.prisma replace the datasource block with:
+//
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("DATABASE_URL")
+// }
+//
+// 2. DATABASE_URL format: postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public
+// 3. Run: pnpm prisma migrate dev --name init_postgres
+//    (or migrate deploy in Docker after creating migrations locally)
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
