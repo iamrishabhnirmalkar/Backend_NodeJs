@@ -331,6 +331,12 @@ Server listens on `PORT` from env (default development: `8000`).
 
 **GET** `/api/v1/health` returns application, system, and **database connection status**.
 
+**Why is the health API hit automatically (e.g. in Docker)?**  
+The **Dockerfile** defines a `HEALTHCHECK` that calls `http://localhost:8000/api/v1/health` every **30 seconds**. Docker uses this to mark the container healthy (HTTP 200) or unhealthy. So you’ll see health requests in `docker-compose logs -f app` even when no one is opening the API in a browser.
+
+**How is the database assessed?**  
+The handler runs a simple DB query (`SELECT 1` via Prisma). If it succeeds, the response includes `"database": "CONNECTED"`; if it fails, `"database": "DISCONNECTED"`. This works for MySQL, MariaDB, and PostgreSQL.
+
 Example when the database is connected:
 
 ```json
