@@ -44,11 +44,11 @@ docker-compose up -d
 
 That's it! The application will:
 
-- ✅ Start MySQL database (with automatic initialization)
+- ✅ Start MySQL database (with automatic initialization, user/password from .env)
 - ✅ Start Redis
 - ✅ Build and start Node.js backend
 - ✅ Run database migrations automatically
-- ✅ Be available at `http://localhost:8000`
+- ✅ Be available at `http://localhost:8001` (or `http://localhost:${PORT}` from .env)
 
 #### One Docker Compose for All Environments
 
@@ -123,10 +123,15 @@ docker-compose build --no-cache
 # Restart app
 docker-compose restart app
 
-# Access MySQL CLI
+# Access MySQL CLI (use your MYSQL_PASSWORD from .env)
+docker-compose exec mysql mysql -u app_user -p backend_nodejs_dev
+# Or with password inline (replace app_password with your MYSQL_PASSWORD):
 docker-compose exec mysql mysql -u app_user -papp_password backend_nodejs_dev
 
-# Access Redis CLI
+# MySQL as root (use MYSQL_ROOT_PASSWORD from .env)
+docker-compose exec mysql mysql -u root -p
+
+# Access Redis CLI (no password by default)
 docker-compose exec redis redis-cli
 
 # Run Prisma commands inside container
@@ -140,25 +145,85 @@ docker-compose exec app pnpm prisma:seed
 Create `.env` file (copy from `.env.docker.example`; never commit `.env`):
 
 ```env
-# Environment (change this: development, test, or production)
+# Environment (development, test, or production)
 NODE_ENV=development
 
-# Database (Docker - ALWAYS use service name 'mysql', not localhost!)
-MYSQL_HOST=mysql          # Service name in docker-compose
+# Database (Docker - use service name 'mysql' inside containers)
+MYSQL_HOST=mysql
+MYSQL_PORT=3307              # Host port for DBeaver/CLI (localhost:3307)
 MYSQL_USER=app_user
 MYSQL_PASSWORD=app_password
+MYSQL_ROOT_PASSWORD=rootpassword
 MYSQL_DATABASE=backend_nodejs_dev
 DATABASE_URL=mysql://app_user:app_password@mysql:3306/backend_nodejs_dev
 
-# Redis (Docker - ALWAYS use service name 'redis', not localhost!)
-REDIS_HOST=redis          # Service name in docker-compose
+# Redis (Docker - use service name 'redis' inside containers)
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=              # Optional; leave empty for no auth
 
-# JWT Secrets (CHANGE IN PRODUCTION!)
+# JWT (CHANGE IN PRODUCTION!)
 JWT_ACCESS_TOKEN_SECRET=your-secret-key
 JWT_REFRESH_TOKEN_SECRET=your-refresh-secret-key
 ```
 
-**Important:** For Docker, always use service names (`mysql`, `redis`), not `localhost`!
+**Important:** For Docker, always use service names (`mysql`, `redis`) in `MYSQL_HOST`/`REDIS_HOST`, not `localhost`. Use `localhost` and `MYSQL_PORT` only when connecting from your host (e.g. DBeaver).
+
+#### Database password setup
+
+Set these in `.env` (copy from `.env.docker.example`):
+
+| Variable              | Purpose                 | Default (example)    |
+| --------------------- | ----------------------- | -------------------- |
+| `MYSQL_ROOT_PASSWORD` | Root user (admin tasks) | `rootpassword`       |
+| `MYSQL_USER`          | App database user       | `app_user`           |
+| `MYSQL_PASSWORD`      | App database password   | `app_password`       |
+| `MYSQL_DATABASE`      | Database name           | `backend_nodejs_dev` |
+
+**Production:** Use strong passwords and change all defaults.
+
+#### Accessing the database (DBeaver GUI or CLI)
+
+**From your host machine** (e.g. DBeaver, MySQL CLI), use **localhost** and the **host port** (not the container port):
+
+| Item     | Value                                        |
+| -------- | -------------------------------------------- |
+| Host     | `localhost`                                  |
+| Port     | `MYSQL_PORT` from `.env` (default `3307`)    |
+| Database | `MYSQL_DATABASE` (e.g. `backend_nodejs_dev`) |
+| Username | `MYSQL_USER` (e.g. `app_user`)               |
+| Password | `MYSQL_PASSWORD` (e.g. `app_password`)       |
+
+**DBeaver (GUI):**
+
+1. New Connection → MySQL.
+2. **Host:** `localhost`
+3. **Port:** `3307` (or your `MYSQL_PORT`)
+4. **Database:** `backend_nodejs_dev` (or your `MYSQL_DATABASE`)
+5. **Username:** `app_user` (or your `MYSQL_USER`)
+6. **Password:** `app_password` (or your `MYSQL_PASSWORD`)
+7. Test connection → Finish.
+
+**CLI (from host):**
+
+```bash
+# If mysql client is installed locally (use MYSQL_PORT from .env)
+mysql -h 127.0.0.1 -P 3307 -u app_user -p backend_nodejs_dev
+```
+
+**CLI (inside Docker):**
+
+```bash
+docker-compose exec mysql mysql -u app_user -p backend_nodejs_dev
+# Enter MYSQL_PASSWORD when prompted
+```
+
+**Redis (CLI only, from Docker):**
+
+```bash
+docker-compose exec redis redis-cli
+# No password by default; set REDIS_PASSWORD in .env if you add auth later.
+```
 
 #### Docker Volumes
 
@@ -361,7 +426,8 @@ If the database is unreachable:
 **Quick test:**
 
 ```bash
-curl http://localhost:8000/api/v1/health
+curl http://localhost:8001/api/v1/health
+# Or use PORT from your .env (e.g. 8000)
 ```
 
 Ensure `DATABASE_URL` in your `.env.development` (or `.env.production` / `.env.test`) is correct and MySQL is running; then run migrations and start the server. The health endpoint will report `CONNECTED` or `DISCONNECTED` accordingly.
@@ -383,148 +449,7 @@ Ensure `DATABASE_URL` in your `.env.development` (or `.env.production` / `.env.t
 
 ## API docs
 
-- Swagger UI: `http://localhost:8000/api-docs`
-
-## Docker Deployment
-
-### Quick Start (All Platforms)
-
-```bash
-# 1. Clone repository
-git clone <repository-url>
-cd Backend_NodeJs
-
-# 2. Copy Docker environment file
-cp .env.docker.example .env
-
-# 3. (Optional) Edit .env with your values
-# Default values work for development
-
-# 4. Start everything
-docker-compose up -d
-
-# 5. Check logs
-docker-compose logs -f app
-
-# 6. Access API
-curl http://localhost:8000/api/v1/health
-```
-
-### Docker Compose Files
-
-| File                      | Purpose                  | Usage                                                                   |
-| ------------------------- | ------------------------ | ----------------------------------------------------------------------- |
-| `docker-compose.yml`      | Production               | `docker-compose up -d`                                                  |
-| `docker-compose.dev.yml`  | Development (hot reload) | `docker-compose -f docker-compose.dev.yml up -d`                        |
-| `docker-compose.test.yml` | Testing                  | `docker-compose -f docker-compose.test.yml up -d`                       |
-| `docker-compose.prod.yml` | Production overrides     | `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d` |
-
-### Docker Services
-
-- **app** - Node.js backend (port 8000)
-- **mysql** - MySQL 8.0 database (port 3306)
-- **redis** - Redis cache (port 6379)
-
-### Environment Variables for Docker
-
-Create `.env` file (see `.env.docker.example`):
-
-```env
-# Database (use Docker service names)
-MYSQL_HOST=mysql                    # Service name, not localhost!
-MYSQL_USER=app_user
-MYSQL_PASSWORD=app_password
-MYSQL_DATABASE=backend_nodejs_dev
-DATABASE_URL=mysql://app_user:app_password@mysql:3306/backend_nodejs_dev
-
-# Redis (use Docker service name)
-REDIS_HOST=redis                    # Service name, not localhost!
-
-# JWT (CHANGE IN PRODUCTION!)
-JWT_ACCESS_TOKEN_SECRET=your-secret-key
-JWT_REFRESH_TOKEN_SECRET=your-refresh-secret-key
-```
-
-### Common Docker Commands
-
-```bash
-# Start services
-docker-compose up -d
-
-# Stop services
-docker-compose down
-
-# Stop and remove volumes (clean database)
-docker-compose down -v
-
-# View logs
-docker-compose logs -f app
-docker-compose logs -f mysql
-
-# Rebuild containers
-docker-compose build --no-cache
-
-# Execute commands in container
-docker-compose exec app pnpm prisma:studio
-docker-compose exec app pnpm prisma:migrate
-docker-compose exec mysql mysql -u app_user -papp_password backend_nodejs_dev
-
-# Check service status
-docker-compose ps
-
-# Restart a service
-docker-compose restart app
-```
-
-### Database Migrations
-
-Migrations run automatically on container start. To run manually:
-
-```bash
-docker-compose exec app pnpm prisma:migrate
-docker-compose exec app pnpm prisma:init
-```
-
-### Production Deployment
-
-1. **Set strong passwords** in `.env`:
-
-   ```env
-   MYSQL_ROOT_PASSWORD=strong_root_password
-   MYSQL_PASSWORD=strong_app_password
-   JWT_ACCESS_TOKEN_SECRET=very-strong-secret-key
-   JWT_REFRESH_TOKEN_SECRET=very-strong-refresh-secret-key
-   ```
-
-2. **Update SERVER_URL**:
-
-   ```env
-   SERVER_URL=https://yourdomain.com
-   ```
-
-3. **Start production**:
-   ```bash
-   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-   ```
-
-### Troubleshooting
-
-**Database connection issues:**
-
-- Ensure `MYSQL_HOST=mysql` (service name, not localhost)
-- Check MySQL is healthy: `docker-compose ps`
-- View MySQL logs: `docker-compose logs mysql`
-
-**Port conflicts:**
-
-- Change ports in `.env`: `MYSQL_PORT=3307`, `PORT=8001`
-
-**Reset everything:**
-
-```bash
-docker-compose down -v
-docker-compose up -d
-```
+- Swagger UI: `http://localhost:8001/api-docs` (or `http://localhost:${PORT}/api-docs` from .env)
 
 ## Git Hooks & Commit Conventions
 

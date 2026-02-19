@@ -16,9 +16,10 @@
 
 services:
   app:
-    # Use development Dockerfile
+    # Use development Dockerfile (target required: base compose has target: production)
     build:
       dockerfile: Dockerfile.dev
+      target: development
     
     # Mount source code for hot reload
     volumes:
@@ -27,8 +28,8 @@ services:
       - /app/generated             # Prevent overwriting generated Prisma client
       - ./logs:/app/logs
     
-    # Development command with hot reload
-    command: sh -c "pnpm prisma:init && pnpm prisma:migrate && pnpm dev"
+    # Development command with hot reload (migrate deploy = no shadow DB needed)
+    command: sh -c "pnpm prisma:init && pnpm exec prisma migrate deploy && pnpm dev"
     
     # Force development environment
     environment:

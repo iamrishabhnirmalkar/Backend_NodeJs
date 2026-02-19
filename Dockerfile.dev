@@ -3,35 +3,18 @@
 # Optimized for development with hot reload
 # ===========================================
 
-FROM node:20-alpine
-
-# Install pnpm globally
+# Base stage for common dependencies
+FROM node:20-alpine AS base
 RUN npm install -g pnpm
-
-# Install development tools globally
-RUN npm install -g nodemon ts-node
-
-# Set working directory
 WORKDIR /app
-
-# Copy package files
 COPY package.json pnpm-lock.yaml ./
-
-# Install all dependencies (including dev dependencies)
-RUN pnpm install
-
-# Copy Prisma schema
 COPY prisma ./prisma
 
-# Copy source code (will be mounted as volume in docker-compose)
+# Development stage (used by docker-compose.override.yml for hot reload)
+FROM base AS development
+RUN npm install -g nodemon ts-node
+RUN pnpm install
 COPY . .
-
-# Create logs directory
 RUN mkdir -p /app/logs
-
-# Expose application port
 EXPOSE 8000
-
-# Default command (can be overridden in docker-compose)
-# Uses nodemon for hot reload
 CMD ["pnpm", "dev"]
