@@ -2,6 +2,17 @@
 
 Express + TypeScript + Prisma (MySQL) API backend with health check, rate limiting, and Swagger docs.
 
+## Database & technology stack
+
+| Component        | Default / used in this project | Notes                                                                                                                            |
+| ---------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Database**     | **MySQL 8.0**                  | Defined in `prisma/schema.prisma` as `provider = "mysql"`. Prisma connects via `DATABASE_URL`.                                   |
+| **ORM**          | **Prisma**                     | Schema: `prisma/schema.prisma`. Client output: `generated/prisma`.                                                               |
+| **Cache**        | **Redis 7**                    | Optional; used for sessions/cache. Host/port from env.                                                                           |
+| **Optional DBs** | MariaDB, PostgreSQL            | Same codebase; use extra compose files or change Prisma provider. See [Database options](#database-options-mariadb--postgresql). |
+
+**Connection:** The app and Prisma use a single connection string: `DATABASE_URL` (e.g. `mysql://USER:PASSWORD@HOST:3306/DATABASE`). For Docker, `HOST` is the service name (`mysql`). For local, `HOST` is `localhost`.
+
 ## Prerequisites
 
 ### Option 1: Docker (Recommended - Works on Windows, Linux, macOS)
@@ -18,37 +29,62 @@ Express + TypeScript + Prisma (MySQL) API backend with health check, rate limiti
 
 ## Setup
 
-### 🐳 Docker Setup (Recommended)
+### 🐳 Run with Docker (complete steps)
 
-**Works on Windows, Linux, macOS, and Ubuntu - Just run Docker!**
+**Works on Windows, Linux, macOS. Uses MySQL 8 + Redis + Node from containers.**
 
-#### Quick Start
+#### Step 1: Clone and env
 
 ```bash
-# Clone repository
 git clone <repository-url>
 cd Backend_NodeJs
 
-# Copy Docker environment file (never commit .env)
-cp .env.docker.example .env
+# Single env file for both Docker and local (never commit .env)
+cp .env.example .env
 
-# Edit .env and set NODE_ENV (development, test, or production)
-# NODE_ENV=development
-
-# For Development: Copy override file (enables hot reload)
-cp docker-compose.override.example.yml docker-compose.override.yml
-
-# Start everything
-docker-compose up -d
+# Edit .env: set NODE_ENV (development | test | production) and passwords if needed.
+# For Docker, keep MYSQL_HOST=mysql and REDIS_HOST=redis (service names).
+# Defaults in .env.example work for development.
 ```
 
-That's it! The application will:
+#### Step 2: (Optional) Development hot reload
 
-- ✅ Start MySQL database (with automatic initialization, user/password from .env)
-- ✅ Start Redis
-- ✅ Build and start Node.js backend
-- ✅ Run database migrations automatically
-- ✅ Be available at `http://localhost:8001` (or `http://localhost:${PORT}` from .env)
+For **development with hot reload** (nodemon, source mounted):
+
+```bash
+cp docker-compose.override.example.yml docker-compose.override.yml
+```
+
+For **production or test**, do **not** create this file (or remove it).
+
+#### Step 3: Build and start
+
+```bash
+# Build images and start all services (MySQL, Redis, app)
+docker-compose up -d --build
+```
+
+**What runs when the app starts:**
+
+| Mode                             | App start command                                         | Migrations                                                         |
+| -------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------ |
+| **With override** (dev)          | `pnpm prisma:init` → `prisma migrate deploy` → `pnpm dev` | Applied automatically with `prisma migrate deploy` (no shadow DB). |
+| **Without override** (prod/test) | `prisma migrate deploy` → `node dist/server.js`           | Applied automatically with `prisma migrate deploy`.                |
+
+So **migrations run automatically on every container start**; you do not need to run them manually unless you want to re-run or seed.
+
+#### Step 4: Verify
+
+```bash
+# Check all containers (mysql, redis, app should be Up)
+docker-compose ps
+
+# App and API (use PORT from .env, default 8000 or 8001)
+curl http://localhost:8000/api/v1/health
+# Or: curl http://localhost:8001/api/v1/health
+```
+
+**Summary:** One command `docker-compose up -d --build` brings up MySQL, Redis, runs Prisma migrations, and starts the app. Use the same `.env` and optional `docker-compose.override.yml` for dev.
 
 #### One Docker Compose for All Environments
 
@@ -102,47 +138,45 @@ cp docker-compose.override.example.yml docker-compose.override.yml
 docker-compose up -d
 ```
 
-#### Docker Commands
+#### Docker: useful commands
 
 ```bash
-# Start all services
+# Start / stop
 docker-compose up -d
-
-# View logs
-docker-compose logs -f app
-
-# Stop all services
 docker-compose down
+docker-compose down -v          # also remove volumes (clean DB)
 
-# Stop and remove volumes (clean database)
-docker-compose down -v
-
-# Rebuild containers
+# Logs and rebuild
+docker-compose logs -f app
 docker-compose build --no-cache
-
-# Restart app
 docker-compose restart app
 
-# Access MySQL CLI (use your MYSQL_PASSWORD from .env)
+# Database CLI (MySQL: user app_user, password from MYSQL_PASSWORD in .env)
 docker-compose exec mysql mysql -u app_user -p backend_nodejs_dev
-# Or with password inline (replace app_password with your MYSQL_PASSWORD):
-docker-compose exec mysql mysql -u app_user -papp_password backend_nodejs_dev
+docker-compose exec mysql mysql -u root -p    # root: MYSQL_ROOT_PASSWORD
 
-# MySQL as root (use MYSQL_ROOT_PASSWORD from .env)
-docker-compose exec mysql mysql -u root -p
-
-# Access Redis CLI (no password by default)
+# Redis CLI (no password by default)
 docker-compose exec redis redis-cli
-
-# Run Prisma commands inside container
-docker-compose exec app pnpm prisma:studio
-docker-compose exec app pnpm prisma:migrate
-docker-compose exec app pnpm prisma:seed
 ```
 
-#### Docker Environment Variables
+#### Docker: Prisma and migration commands
 
-Create `.env` file (copy from `.env.docker.example`; never commit `.env`):
+Run these **inside the app container** (database is MySQL, same as when running locally):
+
+| What you want                                                         | Command (Docker)                                                                                                                              |
+| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Generate Prisma client                                                | `docker-compose exec app pnpm prisma:init`                                                                                                    |
+| Apply migrations (deploy, no new migration file)                      | `docker-compose exec app pnpm exec prisma migrate deploy`                                                                                     |
+| Create a new migration (dev; needs shadow DB – not default in Docker) | See [Prisma migrations – complete command reference](#prisma-migrations--complete-command-reference) below; or run locally against Docker DB. |
+| Open Prisma Studio                                                    | `docker-compose exec app pnpm prisma:studio`                                                                                                  |
+| Seed database (roles, permissions, optional admin)                    | `docker-compose exec app pnpm prisma:seed`                                                                                                    |
+| Reset DB (drops DB, reapplies migrations, optional seed)              | `docker-compose exec app pnpm prisma:reset`                                                                                                   |
+
+Migrations are **already applied on container start** (`prisma migrate deploy`). Use the commands above only when you want to run deploy/seed/studio manually.
+
+#### Docker environment variables
+
+Create `.env` from the single example (copy from `.env.example`; never commit `.env`):
 
 ```env
 # Environment (development, test, or production)
@@ -171,7 +205,7 @@ JWT_REFRESH_TOKEN_SECRET=your-refresh-secret-key
 
 #### Database password setup
 
-Set these in `.env` (copy from `.env.docker.example`):
+Set these in `.env` (copy from `.env.example`):
 
 | Variable              | Purpose                 | Default (example)    |
 | --------------------- | ----------------------- | -------------------- |
@@ -258,9 +292,11 @@ See **[docs/DATABASE-SWITCH.md](docs/DATABASE-SWITCH.md)** for full steps and en
 
 ---
 
-### 📦 Local Setup (Without Docker)
+### 📦 Run without Docker (local)
 
-### 1. Clone and install
+**Requires:** Node.js 18+, pnpm, MySQL 8.x (or MariaDB) and optionally Redis on your machine.
+
+#### Step 1: Clone and install
 
 ```bash
 git clone <repository-url>
@@ -268,7 +304,7 @@ cd Backend_NodeJs
 pnpm install
 ```
 
-### 2. Environment configuration
+#### Step 2: Environment (one file per NODE_ENV)
 
 The app uses **dotenv-flow** and loads env by `NODE_ENV`:
 
@@ -278,59 +314,44 @@ The app uses **dotenv-flow** and loads env by `NODE_ENV`:
 | production  | `.env.production`  |
 | test        | `.env.test`        |
 
-**Copy the example and edit with your values:**
+**Copy the single example and edit:**
 
 ```bash
 cp .env.example .env.development
-# Edit .env.development (see below)
+# Edit .env.development: set MYSQL_HOST=localhost, REDIS_HOST=localhost,
+# and DATABASE_URL=mysql://USER:PASSWORD@localhost:3306/backend_nodejs_dev
 ```
 
-For **production** or **test**, copy and edit the right file:
+For production or test, copy and edit the right file:
 
 ```bash
-cp .env.example .env.production   # for production
-cp .env.example .env.test         # for test
+cp .env.example .env.production
+cp .env.example .env.test
 ```
 
-**Required variables:**
+**Required for local:** `MYSQL_HOST=localhost`, `REDIS_HOST=localhost`, and `DATABASE_URL` must point to your MySQL (e.g. `mysql://root:yourpassword@localhost:3306/backend_nodejs_dev`). Prisma uses only `DATABASE_URL`; no variable expansion in `.env`.
 
-- `DATABASE_URL` – Full MySQL connection string (Prisma does not expand `${VAR}` in .env).
-  - **Docker**: `mysql://app_user:app_password@mysql:3306/backend_nodejs_dev` (use service name `mysql`)
-  - **Local**: `mysql://root:yourpassword@localhost:3306/backend_nodejs_dev` (use `localhost`)
-- `MYSQL_HOST` – Database host
-  - **Docker**: `mysql` (service name)
-  - **Local**: `localhost`
-- `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE` – Database credentials
-- `REDIS_HOST` – Redis host
-  - **Docker**: `redis` (service name)
-  - **Local**: `localhost`
-- `PORT`, `SERVER_URL`, `NODE_ENV`, `FRONTEND_URL`, Redis and rate-limit vars as in `.env.example`.
+#### Step 3: Create database and run migrations
 
-### 3. Database
-
-Create the MySQL database (if it does not exist):
+**Create the MySQL database** (if it does not exist):
 
 ```sql
 CREATE DATABASE backend_nodejs_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-For test:
+For test: `CREATE DATABASE backend_nodejs_test ...`;
 
-```sql
-CREATE DATABASE backend_nodejs_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-Generate Prisma client and run migrations:
+**Generate Prisma client and apply migrations:**
 
 ```bash
 pnpm prisma:init
 pnpm prisma:migrate
 ```
 
-- `prisma:init` – runs `prisma generate` (generates client in `generated/prisma`).
-- `prisma:migrate` – runs `prisma migrate dev` (applies migrations and keeps DB in sync).
+- `prisma:init` → runs `prisma generate` (client in `generated/prisma`).
+- `prisma:migrate` → runs `prisma migrate dev` (applies migrations; can create new migration files; uses a shadow DB).
 
-To reset DB (dev only):
+**Reset DB (dev only):**
 
 ```bash
 pnpm prisma:reset
@@ -446,6 +467,22 @@ Ensure `DATABASE_URL` in your `.env.development` (or `.env.production` / `.env.t
 | `pnpm prisma:reset`   | Reset DB (dev)                               |
 | `pnpm prisma:seed`    | Seed DB (roles, permissions, optional admin) |
 | `pnpm prisma:studio`  | Open Prisma Studio                           |
+
+## Prisma migrations – complete command reference
+
+**Database used by Prisma:** MySQL 8 (default). Schema: `prisma/schema.prisma` with `provider = "mysql"`. Connection: `DATABASE_URL` in `.env` (e.g. `mysql://USER:PASSWORD@HOST:3306/DATABASE`).
+
+| What you want                                                   | Local (no Docker)                 | Docker (inside app container)                                                                                                                                                                   |
+| --------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Generate Prisma client                                          | `pnpm prisma:init`                | `docker-compose exec app pnpm prisma:init`                                                                                                                                                      |
+| Apply migrations (no new migration file)                        | `pnpm exec prisma migrate deploy` | `docker-compose exec app pnpm exec prisma migrate deploy`                                                                                                                                       |
+| Apply migrations and create new migration (dev; uses shadow DB) | `pnpm prisma:migrate`             | Prefer running locally with `DATABASE_URL` pointing at Docker MySQL (port 3307), or run `docker-compose exec app pnpm exec prisma migrate dev --name your_name` (needs DB user with CREATE DB). |
+| Push schema (no migration files; dev only)                      | `pnpm prisma:push`                | `docker-compose exec app pnpm prisma:push`                                                                                                                                                      |
+| Reset DB (drop, re-migrate, optional seed)                      | `pnpm prisma:reset`               | `docker-compose exec app pnpm prisma:reset`                                                                                                                                                     |
+| Seed (roles, permissions, optional admin)                       | `pnpm prisma:seed`                | `docker-compose exec app pnpm prisma:seed`                                                                                                                                                      |
+| Open Prisma Studio                                              | `pnpm prisma:studio`              | `docker-compose exec app pnpm prisma:studio`                                                                                                                                                    |
+
+**When migrations run:** With Docker, migrations run **automatically on app start** via `prisma migrate deploy`. Locally, run `pnpm prisma:init` and `pnpm prisma:migrate` (or `prisma migrate deploy`) yourself after creating the database.
 
 ## API docs
 
