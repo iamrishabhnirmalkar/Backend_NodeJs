@@ -117,6 +117,18 @@ docker-compose up -d
 - **mysql** - MySQL 8.0 database (port 3306); DB and user created from env
 - **redis** - Redis cache (port 6379)
 
+## Health check (why `/api/v1/health` is called automatically)
+
+When you run the app in Docker, the **container health check** is what hits the health API:
+
+- **Where it’s defined:** In the **Dockerfile** (`HEALTHCHECK` instruction).
+- **What it does:** Every **30 seconds** Docker runs:
+  `node -e "require('http').get('http://localhost:8000/api/v1/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"`
+- **Why:** So Docker (and orchestrators) can see if the app is up. If the health endpoint returns **200**, the container is marked **healthy**; otherwise it’s **unhealthy** after 3 failed retries.
+- **So:** When you run `docker-compose logs -f app`, you’ll see a request to `/api/v1/health` about every 30s because of this check, not because you opened something in the browser.
+
+**How the database is assessed:** The health handler runs a simple query against the DB (e.g. `SELECT 1` via Prisma) and sets `database: 'CONNECTED'` or `'DISCONNECTED'` in the JSON response. So the same endpoint both serves Docker’s health check and tells you if the app can talk to MySQL/MariaDB/PostgreSQL.
+
 ## Database setup (Docker)
 
 - **MySQL**: Created by docker-compose from `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`. No manual DB setup needed.

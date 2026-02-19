@@ -77,7 +77,7 @@ USER nodejs
 # Expose application port
 EXPOSE 8000
 
-# Health check configuration
+# Health check: Docker calls this every 30s to see if the app is up (hits /api/v1/health)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:8000/api/v1/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 

@@ -16,6 +16,7 @@ export default {
   },
   health: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      // Assess DB: run a simple query (works for MySQL, MariaDB, PostgreSQL)
       const dbStatus = await database.$queryRaw`SELECT 1`
         .then(() => 'CONNECTED')
         .catch(() => 'DISCONNECTED');

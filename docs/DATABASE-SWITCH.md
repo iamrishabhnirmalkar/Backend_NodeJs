@@ -121,3 +121,16 @@ DATABASE_URL=postgresql://app_user:app_password@postgres:5432/backend_nodejs_dev
 ```
 
 Use these in your `.env` when running with the corresponding override file.
+
+---
+
+## Seeding (MySQL, MariaDB, PostgreSQL)
+
+The same seed script (`prisma/seed.ts`) works for all three databases. It creates roles, permissions, and optionally an admin user.
+
+- **Local:** Set `DATABASE_URL` in your env, then run `pnpm prisma:seed`.
+- **Docker (MySQL):** `docker-compose exec app pnpm prisma:seed`
+- **Docker (MariaDB):** `docker-compose -f docker-compose.yml -f docker-compose.mariadb.yml exec app pnpm prisma:seed`
+- **Docker (PostgreSQL):** `docker-compose -f docker-compose.yml -f docker-compose.postgres.yml exec app pnpm prisma:seed`
+
+To create an admin user, set `SEED_ADMIN_PASSWORD` in `.env` before running the seed. See [README – Seeding](../README.md) for full details.

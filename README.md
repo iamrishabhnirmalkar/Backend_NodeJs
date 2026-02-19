@@ -132,6 +132,7 @@ docker-compose exec redis redis-cli
 # Run Prisma commands inside container
 docker-compose exec app pnpm prisma:studio
 docker-compose exec app pnpm prisma:migrate
+docker-compose exec app pnpm prisma:seed
 ```
 
 #### Docker Environment Variables
@@ -270,6 +271,39 @@ To reset DB (dev only):
 pnpm prisma:reset
 ```
 
+#### Seeding (MySQL, MariaDB, or PostgreSQL)
+
+The same seed script works for **MySQL**, **MariaDB**, and **PostgreSQL**. It creates roles (`admin`, `user`), permissions (e.g. `user:create`, `user:read`), and optionally an admin user.
+
+**Local (any DB):** Set `DATABASE_URL` in your env (e.g. `.env.development`) to point to your database, then run:
+
+```bash
+pnpm prisma:init
+pnpm prisma:seed
+```
+
+To create a seeded admin user, set `SEED_ADMIN_PASSWORD` in `.env` (e.g. `SEED_ADMIN_PASSWORD=your-secure-password`). The seed will create `admin@example.com` with role `admin`.
+
+**Docker (MySQL):**
+
+```bash
+docker-compose exec app pnpm prisma:seed
+```
+
+**Docker (MariaDB):** Same as MySQL (service name stays `mysql`):
+
+```bash
+docker-compose -f docker-compose.yml -f docker-compose.mariadb.yml exec app pnpm prisma:seed
+```
+
+**Docker (PostgreSQL):**
+
+```bash
+docker-compose -f docker-compose.yml -f docker-compose.postgres.yml exec app pnpm prisma:seed
+```
+
+Seeding is **idempotent** (safe to run multiple times). It also runs automatically after `pnpm prisma:reset` unless you pass `--skip-seed`.
+
 ### 4. Run the app
 
 **Development** (uses `.env.development`):
@@ -296,6 +330,12 @@ Server listens on `PORT` from env (default development: `8000`).
 ## Health check and database status
 
 **GET** `/api/v1/health` returns application, system, and **database connection status**.
+
+**Why is the health API hit automatically (e.g. in Docker)?**  
+The **Dockerfile** defines a `HEALTHCHECK` that calls `http://localhost:8000/api/v1/health` every **30 seconds**. Docker uses this to mark the container healthy (HTTP 200) or unhealthy. So you’ll see health requests in `docker-compose logs -f app` even when no one is opening the API in a browser.
+
+**How is the database assessed?**  
+The handler runs a simple DB query (`SELECT 1` via Prisma). If it succeeds, the response includes `"database": "CONNECTED"`; if it fails, `"database": "DISCONNECTED"`. This works for MySQL, MariaDB, and PostgreSQL.
 
 Example when the database is connected:
 
@@ -328,17 +368,18 @@ Ensure `DATABASE_URL` in your `.env.development` (or `.env.production` / `.env.t
 
 ## Scripts
 
-| Script                | Description                   |
-| --------------------- | ----------------------------- |
-| `pnpm dev`            | Start dev server (nodemon)    |
-| `pnpm start`          | Start production server       |
-| `pnpm build`          | Compile TypeScript to `dist/` |
-| `pnpm test`           | Start server in test env      |
-| `pnpm prisma:init`    | Generate Prisma client        |
-| `pnpm prisma:migrate` | Run migrations (dev)          |
-| `pnpm prisma:push`    | Push schema (no migrations)   |
-| `pnpm prisma:reset`   | Reset DB (dev)                |
-| `pnpm prisma:studio`  | Open Prisma Studio            |
+| Script                | Description                                  |
+| --------------------- | -------------------------------------------- |
+| `pnpm dev`            | Start dev server (nodemon)                   |
+| `pnpm start`          | Start production server                      |
+| `pnpm build`          | Compile TypeScript to `dist/`                |
+| `pnpm test`           | Start server in test env                     |
+| `pnpm prisma:init`    | Generate Prisma client                       |
+| `pnpm prisma:migrate` | Run migrations (dev)                         |
+| `pnpm prisma:push`    | Push schema (no migrations)                  |
+| `pnpm prisma:reset`   | Reset DB (dev)                               |
+| `pnpm prisma:seed`    | Seed DB (roles, permissions, optional admin) |
+| `pnpm prisma:studio`  | Open Prisma Studio                           |
 
 ## API docs
 

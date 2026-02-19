@@ -27,7 +27,11 @@
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:push": "prisma db push",
     "prisma:reset": "prisma migrate reset",
+    "prisma:seed": "prisma db seed",
     "prepare": "husky || true"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   },
   "repository": {
     "type": "git",
