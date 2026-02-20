@@ -4,6 +4,18 @@ import httpError from '../../utils/httpError';
 import httpResponse from '../../utils/httpResponse';
 import responseMessage from '../../constants/responseMessage';
 
+/** UserRole with role (and rolePermissions) included for map callbacks */
+type UrWithRoleAndPerms = {
+  role: {
+    id: string;
+    name: string;
+    description: string | null;
+    rolePermissions: Array<{ permission: { name: string } }>;
+  };
+  createdAt: Date;
+};
+type UrWithRole = { role: { id: string; name: string } };
+
 export default {
   /**
    * Assign role to user
@@ -157,11 +169,13 @@ export default {
           email: user.email,
           username: user.username,
         },
-        roles: userRoles.map((ur) => ({
+        roles: userRoles.map((ur: UrWithRoleAndPerms) => ({
           id: ur.role.id,
           name: ur.role.name,
           description: ur.role.description,
-          permissions: ur.role.rolePermissions.map((rp) => rp.permission.name),
+          permissions: ur.role.rolePermissions.map(
+            (rp: { permission: { name: string } }) => rp.permission.name,
+          ),
           assignedAt: ur.createdAt,
         })),
       });
@@ -236,7 +250,7 @@ export default {
       });
 
       httpResponse(req, res, 200, 'User roles updated successfully', {
-        roles: updatedUserRoles.map((ur) => ur.role),
+        roles: updatedUserRoles.map((ur: UrWithRole) => ur.role),
       });
     } catch (error: any) {
       httpError(next, error, req, 500);

@@ -3,6 +3,11 @@ import database from '../config/database/connection';
 import httpError from '../utils/httpError';
 import responseMessage from '../constants/responseMessage';
 
+/** UserRole with role included (for map callbacks) */
+type UrWithRole = { role: { name: string } };
+/** RolePermission with permission included (for map callbacks) */
+type RpWithPermission = { permission: { name: string } };
+
 /**
  * RBAC Middleware - Check if user has required role(s)
  * Usage: requireRole('admin') or requireRole(['admin', 'moderator'])
@@ -35,7 +40,7 @@ export const requireRole = (allowedRoles: string | string[]) => {
         },
       });
 
-      const userRoleNames = userRoles.map((ur) => ur.role.name);
+      const userRoleNames = userRoles.map((ur: UrWithRole) => ur.role.name);
 
       // Check if user has any of the required roles
       const hasRole = roles.some((role) => userRoleNames.includes(role));
@@ -92,7 +97,7 @@ export const requirePermission = (allowedPermissions: string | string[]) => {
         },
       });
 
-      const roleIds = userRoles.map((ur) => ur.roleId);
+      const roleIds = userRoles.map((ur: { roleId: string }) => ur.roleId);
 
       if (roleIds.length === 0) {
         httpError(next, new Error(responseMessage.FORBIDDEN('No roles assigned')), req, 403);
@@ -109,7 +114,7 @@ export const requirePermission = (allowedPermissions: string | string[]) => {
         },
       });
 
-      const userPermissions = rolePermissions.map((rp) => rp.permission.name);
+      const userPermissions = rolePermissions.map((rp: RpWithPermission) => rp.permission.name);
 
       // Check if user has any of the required permissions
       const hasPermission = permissions.some((permission) => userPermissions.includes(permission));

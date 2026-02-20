@@ -6,6 +6,18 @@ import httpError from '../../utils/httpError';
 import httpResponse from '../../utils/httpResponse';
 import responseMessage from '../../constants/responseMessage';
 
+/** UserRole with role included (for map callbacks) */
+type UrWithRole = { role: { name: string } };
+/** UserRole with role and rolePermissions included (for map callbacks) */
+type UrWithRoleAndPerms = {
+  role: {
+    id: string;
+    name: string;
+    description: string | null;
+    rolePermissions: Array<{ permission: { name: string } }>;
+  };
+};
+
 export default {
   /**
    * Register a new user
@@ -178,7 +190,7 @@ export default {
           username: user.username,
           firstName: user.firstName,
           lastName: user.lastName,
-          roles: userRoles.map((ur) => ur.role.name),
+          roles: userRoles.map((ur: UrWithRole) => ur.role.name),
         },
         tokens: {
           accessToken,
@@ -328,14 +340,14 @@ export default {
         },
       });
 
-      const roles = userRoles.map((ur) => ({
+      const roles = userRoles.map((ur: UrWithRoleAndPerms) => ({
         id: ur.role.id,
         name: ur.role.name,
         description: ur.role.description,
       }));
 
-      const permissions = userRoles.flatMap((ur) =>
-        ur.role.rolePermissions.map((rp) => rp.permission.name),
+      const permissions = userRoles.flatMap((ur: UrWithRoleAndPerms) =>
+        ur.role.rolePermissions.map((rp: { permission: { name: string } }) => rp.permission.name),
       );
 
       httpResponse(req, res, 200, responseMessage.SUCCESS, {
