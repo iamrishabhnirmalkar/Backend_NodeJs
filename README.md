@@ -509,6 +509,18 @@ Ensure `DATABASE_URL` in your `.env.development` (or `.env.production` / `.env.t
 
 **When migrations run:** With Docker, migrations run **automatically on app start** via `prisma migrate deploy`. Locally, run `pnpm prisma:init` and `pnpm prisma:migrate` (or `prisma migrate deploy`) yourself after creating the database.
 
+## CI (GitHub Actions)
+
+On **push** or **pull_request** to `main`, `master`, or `develop`, the workflow runs **for each database** (MySQL, MariaDB, PostgreSQL):
+
+1. **Checkout** → **Setup Node 20 + pnpm** → **Install** (`pnpm install --frozen-lockfile`)
+2. **Database**: MySQL 8, MariaDB 11, or PostgreSQL 16 (matrix) + **Redis 7** service
+3. **Wait for DB** → **Prisma validate** → **Prisma generate** → **Migrations** (MySQL/MariaDB: `prisma migrate deploy`; PostgreSQL: `prisma db push`) → **Seed** (`prisma db seed`)
+4. **Build** (`pnpm run build`)
+5. **Smoke test**: start server, `GET /api/v1/health`, assert `"database": "CONNECTED"`
+
+Workflow file: [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Each push runs three jobs (mysql, mariadb, postgres). To run the same steps locally (with MySQL/Redis running and `DATABASE_URL` set): `pnpm install`, `pnpm prisma:init`, `pnpm exec prisma migrate deploy` (or `db push` for PostgreSQL), `pnpm exec prisma db seed`, `pnpm run build`.
+
 ## API docs
 
 - Swagger UI: `http://localhost:8001/api-docs` (or `http://localhost:${PORT}/api-docs` from .env)
