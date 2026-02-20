@@ -11,7 +11,7 @@ Express + TypeScript + Prisma (MySQL) API backend with health check, rate limiti
 | **Cache**        | **Redis 7**                    | Optional; used for sessions/cache. Host/port from env.                                                                           |
 | **Optional DBs** | MariaDB, PostgreSQL            | Same codebase; use extra compose files or change Prisma provider. See [Database options](#database-options-mariadb--postgresql). |
 
-**Connection:** The app and Prisma use a single connection string: `DATABASE_URL` (e.g. `mysql://USER:PASSWORD@HOST:3306/DATABASE`). For Docker, `HOST` is the service name (`mysql`). For local, `HOST` is `localhost`.
+**Connection:** The app and Prisma use a single connection string: `DATABASE_URL` (e.g. `mysql://USER:PASSWORD@HOST:3306/DATABASE`). For Docker, `HOST` is the service name (`mysql`). For local, `HOST` is `localhost`. To verify the database connection on **Windows, Mac, or Linux** (Docker or local), see **[docs/VERIFY-DATABASE-CONNECTION.md](docs/VERIFY-DATABASE-CONNECTION.md)**.
 
 ## Prerequisites
 
@@ -349,7 +349,10 @@ pnpm prisma:migrate
 ```
 
 - `prisma:init` → runs `prisma generate` (client in `generated/prisma`).
+- `prisma:init:clean` → deletes `generated/` then runs `prisma generate` (use on Windows if you get EPERM).
 - `prisma:migrate` → runs `prisma migrate dev` (applies migrations; can create new migration files; uses a shadow DB).
+
+Seed is configured in **`prisma.config.ts`** (not in `package.json`), so it works on Windows, Mac, Linux, and Docker and avoids the Prisma 7 deprecation warning.
 
 **Reset DB (dev only):**
 
@@ -389,6 +392,25 @@ docker-compose -f docker-compose.yml -f docker-compose.postgres.yml exec app pnp
 ```
 
 Seeding is **idempotent** (safe to run multiple times). It also runs automatically after `pnpm prisma:reset` unless you pass `--skip-seed`.
+
+#### Prisma generate: Windows EPERM / “operation not permitted”
+
+On **Windows**, `pnpm prisma:init` or `pnpm prisma:init:clean` can fail with:
+
+- `EPERM: ... rename '...\query_engine-windows.dll.node.tmp...'` (during generate), or
+- `EPERM: ... unlink '...\query_engine-windows.dll.node'` (during init:clean)
+
+Something (Node, VS Code, dev server, Prisma Studio, antivirus) has that file open. **Close it first:**
+
+1. Stop `pnpm dev`, close Prisma Studio, close VS Code (or this folder).
+2. In **Task Manager** (Ctrl+Shift+Esc), end all **“Node.js JavaScript Runtime”** processes.
+3. Run again: `pnpm prisma:init:clean`.
+
+If it still fails, **restart your PC**, then open only a terminal, `cd` to the project, and run `pnpm prisma:init:clean` before opening VS Code or starting the dev server.
+
+**Docker-only dev:** Run `docker-compose up -d` then `docker-compose exec app pnpm prisma:init` so generation happens in Linux (no Windows lock). See **docs/TROUBLESHOOTING.md** for full steps.
+
+**Mac / Linux / Docker:** This EPERM issue is rare; `pnpm prisma:init` usually works. Prisma config and scripts are the same on all platforms.
 
 ### 4. Run the app
 
@@ -453,20 +475,23 @@ curl http://localhost:8001/api/v1/health
 
 Ensure `DATABASE_URL` in your `.env.development` (or `.env.production` / `.env.test`) is correct and MySQL is running; then run migrations and start the server. The health endpoint will report `CONNECTED` or `DISCONNECTED` accordingly.
 
+**XAMPP / local MySQL running but database still not connected?** Check that (1) the database name in `DATABASE_URL` exists (create it in phpMyAdmin), (2) `DATABASE_URL` is exactly `mysql://USER:PASSWORD@localhost:3306/DATABASE`, and (3) the same `DATABASE_URL` is in the file that dotenv-flow loads (e.g. `.env` or `.env.development`). Full checklist: **[docs/TROUBLESHOOTING.md#local-mysql-xampp--wamp--mamp-database-not-connected](docs/TROUBLESHOOTING.md)**.
+
 ## Scripts
 
-| Script                | Description                                  |
-| --------------------- | -------------------------------------------- |
-| `pnpm dev`            | Start dev server (nodemon)                   |
-| `pnpm start`          | Start production server                      |
-| `pnpm build`          | Compile TypeScript to `dist/`                |
-| `pnpm test`           | Start server in test env                     |
-| `pnpm prisma:init`    | Generate Prisma client                       |
-| `pnpm prisma:migrate` | Run migrations (dev)                         |
-| `pnpm prisma:push`    | Push schema (no migrations)                  |
-| `pnpm prisma:reset`   | Reset DB (dev)                               |
-| `pnpm prisma:seed`    | Seed DB (roles, permissions, optional admin) |
-| `pnpm prisma:studio`  | Open Prisma Studio                           |
+| Script                   | Description                                                |
+| ------------------------ | ---------------------------------------------------------- |
+| `pnpm dev`               | Start dev server (nodemon)                                 |
+| `pnpm start`             | Start production server                                    |
+| `pnpm build`             | Compile TypeScript to `dist/`                              |
+| `pnpm test`              | Start server in test env                                   |
+| `pnpm prisma:init`       | Generate Prisma client                                     |
+| `pnpm prisma:init:clean` | Delete `generated/` and generate (use on Windows if EPERM) |
+| `pnpm prisma:migrate`    | Run migrations (dev)                                       |
+| `pnpm prisma:push`       | Push schema (no migrations)                                |
+| `pnpm prisma:reset`      | Reset DB (dev)                                             |
+| `pnpm prisma:seed`       | Seed DB (roles, permissions, optional admin)               |
+| `pnpm prisma:studio`     | Open Prisma Studio                                         |
 
 ## Prisma migrations – complete command reference
 

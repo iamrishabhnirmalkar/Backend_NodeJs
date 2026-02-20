@@ -28,10 +28,8 @@
     "prisma:push": "prisma db push",
     "prisma:reset": "prisma migrate reset",
     "prisma:seed": "prisma generate && prisma db seed",
+    "prisma:init:clean": "rimraf generated && prisma generate",
     "prepare": "husky || true"
-  },
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
   },
   "repository": {
     "type": "git",

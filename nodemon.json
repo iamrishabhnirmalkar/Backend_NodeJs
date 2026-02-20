@@ -1,0 +1,17 @@
+{
+  "watch": ["src", "prisma"],
+  "ext": "ts,js,json,prisma",
+  "ignore": [
+    "node_modules",
+    "dist",
+    "generated",
+    "logs",
+    "*.log",
+    ".env",
+    ".env.*",
+    ".git",
+    "coverage",
+    "docs"
+  ],
+  "delay": "500"
+}
