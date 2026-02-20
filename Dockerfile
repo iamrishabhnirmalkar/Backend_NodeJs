@@ -54,11 +54,11 @@ RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 # Prisma is in devDependencies but we need CLI for migrations
 RUN npm install -g prisma@^6.19.0
 
-# Copy Prisma schema (needed for migrations)
+# Copy Prisma schema (needed for migrations and client generation)
 COPY prisma ./prisma
 
-# Copy generated Prisma client from base stage
-COPY --from=base /app/generated ./generated
+# Generate Prisma client (output: node_modules/.prisma/client)
+RUN npx prisma generate
 
 # Copy built application from base stage
 COPY --from=base /app/dist ./dist

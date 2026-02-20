@@ -7,7 +7,7 @@ Express + TypeScript + Prisma (MySQL) API backend with health check, rate limiti
 | Component        | Default / used in this project | Notes                                                                                                                            |
 | ---------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
 | **Database**     | **MySQL 8.0**                  | Defined in `prisma/schema.prisma` as `provider = "mysql"`. Prisma connects via `DATABASE_URL`.                                   |
-| **ORM**          | **Prisma**                     | Schema: `prisma/schema.prisma`. Client output: `generated/prisma`.                                                               |
+| **ORM**          | **Prisma**                     | Schema: `prisma/schema.prisma`. Client output: `node_modules/.prisma/client` (default).                                          |
 | **Cache**        | **Redis 7**                    | Optional; used for sessions/cache. Host/port from env.                                                                           |
 | **Optional DBs** | MariaDB, PostgreSQL            | Same codebase; use extra compose files or change Prisma provider. See [Database options](#database-options-mariadb--postgresql). |
 
@@ -348,7 +348,7 @@ pnpm prisma:init
 pnpm prisma:migrate
 ```
 
-- `prisma:init` → runs `prisma generate` (client in `generated/prisma`).
+- `prisma:init` → runs `prisma generate` (client in `node_modules/.prisma/client`).
 - `prisma:init:clean` → deletes `generated/` then runs `prisma generate` (use on Windows if you get EPERM).
 - `prisma:migrate` → runs `prisma migrate dev` (applies migrations; can create new migration files; uses a shadow DB).
 

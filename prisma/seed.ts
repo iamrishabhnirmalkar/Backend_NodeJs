@@ -4,7 +4,7 @@
  * Load DATABASE_URL from .env (or .env.development, etc.) before running.
  */
 import 'dotenv-flow/config';
-import { PrismaClient } from '../generated/prisma';
+import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();

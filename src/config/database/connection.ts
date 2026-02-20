@@ -1,5 +1,5 @@
-// Use generated client (schema has output = "../generated/prisma") – same on Windows, Mac, Linux, Docker
-import { PrismaClient } from '../../../generated/prisma';
+// Prisma client (schema output: node_modules/.prisma/client) – same on Windows, Mac, Linux, Docker
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
