@@ -109,14 +109,39 @@ jobs:
           fi
         shell: bash
 
-      - name: Wait for database
+      - name: Wait for database port
         run: |
           for i in $(seq 1 60); do
             if (echo >/dev/tcp/127.0.0.1/${{ matrix.db_port }}) 2>/dev/null; then
-              echo "${{ matrix.database }} ready"
+              echo "Port ${{ matrix.db_port }} open"
               exit 0
             fi
-            echo "Waiting for ${{ matrix.database }}..."
+            echo "Waiting for port..."
+            sleep 2
+          done
+          echo "Port ${{ matrix.db_port }} did not open"
+          exit 1
+
+      - name: Wait for database to accept connections
+        run: |
+          for i in $(seq 1 45); do
+            if [ "${{ matrix.database }}" = "postgres" ]; then
+              if docker exec ci-db pg_isready -U ${{ matrix.db_user }} -q 2>/dev/null; then
+                echo "${{ matrix.database }} accepting connections"
+                exit 0
+              fi
+            elif [ "${{ matrix.database }}" = "mariadb" ]; then
+              if docker exec ci-db mariadb -h localhost -u ${{ matrix.db_user }} -p${{ matrix.db_password }} -e "SELECT 1" 2>/dev/null; then
+                echo "${{ matrix.database }} accepting connections"
+                exit 0
+              fi
+            else
+              if docker exec ci-db mysqladmin ping -h localhost -u ${{ matrix.db_user }} -p${{ matrix.db_password }} 2>/dev/null; then
+                echo "${{ matrix.database }} accepting connections"
+                exit 0
+              fi
+            fi
+            echo "Waiting for ${{ matrix.database }} to accept connections..."
             sleep 2
           done
           echo "Database did not become ready"
@@ -130,6 +155,8 @@ jobs:
 
       - name: Validate Prisma schema
         run: pnpm exec prisma validate
+        env:
+          DATABASE_URL: ${{ matrix.database_url }}
 
       - name: Generate Prisma Client
         run: pnpm prisma:init
@@ -164,16 +191,27 @@ jobs:
           export DATABASE_URL='${{ matrix.database_url }}'
           pnpm exec node dist/server.js &
           SERVER_PID=$!
+          SERVER_UP=0
           for i in $(seq 1 30); do
             if curl -sf http://127.0.0.1:8000/api/v1/health >/dev/null; then
               echo "Server up"
+              SERVER_UP=1
               break
             fi
             sleep 1
           done
+          if [ "$SERVER_UP" -ne 1 ]; then
+            echo "Server did not start"
+            kill $SERVER_PID 2>/dev/null || true
+            exit 1
+          fi
           HEALTH=$(curl -s http://127.0.0.1:8000/api/v1/health)
           echo "$HEALTH" | head -c 500
-          echo "$HEALTH" | grep -qE '"database"[[:space:]]*:[[:space:]]*"CONNECTED"' || (echo "Database not connected"; kill $SERVER_PID 2>/dev/null; exit 1)
+          if ! echo "$HEALTH" | grep -qE '"database"[[:space:]]*:[[:space:]]*"CONNECTED"'; then
+            echo "Database not connected"
+            kill $SERVER_PID 2>/dev/null || true
+            exit 1
+          fi
           kill $SERVER_PID 2>/dev/null || true
         shell: bash
         env:
