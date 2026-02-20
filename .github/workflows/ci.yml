@@ -1,5 +1,5 @@
 # ===========================================
-# CI: On push – install, migrate/push, seed, build, smoke test
+# CI: On push – install, migrate/push, build, smoke test
 # Runs for: MySQL, MariaDB, PostgreSQL (matrix)
 # ===========================================
 
@@ -174,12 +174,6 @@ jobs:
         run: pnpm exec prisma db push
         env:
           DATABASE_URL: ${{ matrix.database_url }}
-
-      - name: Seed database
-        run: pnpm exec prisma db seed
-        env:
-          DATABASE_URL: ${{ matrix.database_url }}
-          SEED_ADMIN_PASSWORD: ci-admin-secret
 
       - name: Build
         run: pnpm run build
